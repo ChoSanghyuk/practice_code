@@ -12,7 +12,7 @@ public class AopTests {
 
     @Test
     public void aopLoggingTest(){
-        // Client가 직적적으로 method1를 호출할 때에는 부가기능이 실행됩니다.
+        // Client가 method1를 호출할 때에는 부가기능이 실행됩니다.
         target.method1();
     }
 
