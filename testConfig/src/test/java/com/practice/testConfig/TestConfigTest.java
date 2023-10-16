@@ -18,7 +18,6 @@ public class TestConfigTest {
 
     @Test
     public void beanTest(){
-        System.out.println(myTestBean.getWords());
         assertTrue(myTestBean.getWords().equals("Test Environment Bean"));
     }
 }
