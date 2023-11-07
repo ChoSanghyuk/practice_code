@@ -1,0 +1,48 @@
+
+spring:
+  profiles:
+    group:
+      test: test-env, test-extra
+      prod: prod-env, prod-extra
+    active: prod
+  http:
+    encoding:
+      charset: UTF-8
+      enabled: true
+---
+
+spring:
+  config:
+    activate:
+      on-profile: "test-env"
+
+custom:
+  word : "This is test environment"
+
+---
+
+spring:
+  config:
+    activate:
+      on-profile: "prod-env"
+
+custom:
+  word : "This is prod environment"
+
+---
+spring:
+  config:
+    activate:
+      on-profile: "prod-extra"
+
+custom:
+  extra : "Prod Extra setting"
+
+---
+spring:
+  config:
+    activate:
+      on-profile: "test-extra"
+
+custom:
+  extra : "Test Extra setting"
