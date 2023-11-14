@@ -21,6 +21,7 @@ public class ProdConfig {
     @Bean
     public MyBean myBean(){
         System.out.println("prod profile에서 빈을 생성합니다.");
+
         MyBean myBean = new MyBean(word, extra);
         return myBean;
     }
