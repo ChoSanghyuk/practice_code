@@ -13,10 +13,10 @@
         <setting name="defaultExecutorType" value="REUSE"/>
     </settings>
 
-    <typeAliases>
-        <typeAlias alias="LowerCamleCaseMap" type = "com.ooo.ooo.ooo.map.LowerCamelCaseMap"/>
-        <package name = "ooo.ooo.ooo.online"></package>
-    </typeAliases>
+<!--    <typeAliases>-->
+<!--        <typeAlias alias="LowerCamleCaseMap" type = "com.ooo.ooo.ooo.map.LowerCamelCaseMap"/>-->
+<!--        <package name = "ooo.ooo.ooo.online"></package>-->
+<!--    </typeAliases>-->
     <typeHandlers>
         <typeHandler handler="org.apache.ibatis.type.ClobTypeHandler" jdbcType="CLOB" javaType="java.lang.String"/>
     </typeHandlers>
@@ -33,6 +33,8 @@
 <!--            </dataSource>-->
 <!--        </environment>-->
 <!--    </environments>-->
-
+    <mappers>
+        <mapper resource="sql/sql-employee.xml"/>
+    </mappers>
 
 </configuration>

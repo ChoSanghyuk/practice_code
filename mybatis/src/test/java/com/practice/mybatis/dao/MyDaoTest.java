@@ -1,5 +1,6 @@
 package com.practice.mybatis.dao;
 
+import com.practice.mybatis.entity.Employee;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.ibatis.mapping.Environment;
 import org.apache.ibatis.session.Configuration;
@@ -32,6 +33,12 @@ public class MyDaoTest {
         Connection conn = dao.getSqlSession().getConnection();
         log.info("{}", conn);
         assertTrue(!conn.isClosed());
+    }
+    @Test
+    public void retrieveEmployeeByIdTest(){
+        Employee employee = dao.retrieveEmployeeById(84455L);
+        log.info("{}", employee);
+        assertTrue(employee.getName().equals("조상혁"));
     }
 
 }
