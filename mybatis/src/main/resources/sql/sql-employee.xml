@@ -3,10 +3,9 @@
 <mapper namespace="O.Employee">
 
     <select id="retrieveById"
-            resultType="com.practice.mybatis.entity.Employee"
+            resultType="Employee"
             parameterType = "Long">
-        SELECT * FROM EMPLOYEE WHERE ID = #{id}
+        SELECT * FROM EMPLOYEES WHERE ID = #{id}
     </select>
-
 
 </mapper>
