@@ -10,5 +10,5 @@ Spring 프로젝트에서 MyBatis를 설정하고 사용합니다.
 
 
 
-"[Spring] MyBatis 사용하기 (feat. 다중 datasource)" 블로그 URL : https://dev-ote.tistory.com/
+"[Spring] MyBatis 사용하기 (feat. 다중 datasource)" 블로그 URL : https://dev-ote.tistory.com/33
 
