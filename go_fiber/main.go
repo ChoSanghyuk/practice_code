@@ -9,5 +9,6 @@ func main() {
 		return c.SendString("Hello!" + c.Params("name") + "   " + c.Params("age")) //+
 	})
 
+	addRoute(app)
 	app.Listen(":3000")
 }
