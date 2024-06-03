@@ -1,4 +1,4 @@
-package main
+package route
 
 import (
 	basic "go_fiber/01_basic"
@@ -6,7 +6,7 @@ import (
 	"github.com/gofiber/fiber/v3"
 )
 
-func addRoute(app *fiber.App) {
+func AddRoute(app *fiber.App) {
 
 	basic.BasicRoute(app)
 }
