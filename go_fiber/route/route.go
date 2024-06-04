@@ -3,7 +3,7 @@ package route
 import (
 	basic "go_fiber/01_basic"
 
-	"github.com/gofiber/fiber/v3"
+	"github.com/gofiber/fiber/v2"
 )
 
 func AddRoute(app *fiber.App) {
