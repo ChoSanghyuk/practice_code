@@ -1,7 +1,6 @@
 package middleware
 
 import (
-	"context"
 	"fmt"
 	"io"
 	"net/http"
@@ -19,31 +18,7 @@ func init() {
 
 	// LimitTestApp.Use(LimiterHandler)
 
-	LimitTestApp.Use(func(c *fiber.Ctx) error {
-		fmt.Println("middleware called")
-		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
-		defer cancel()
-		// time.Sleep(2 * time.Second)
-		// Create a new Fiber context that can be cancelled
-		// fc := c.Clone()
-
-		// Run the handler in a goroutine so we can use select
-		done := make(chan bool, 1)
-		go func() {
-			c.Next() // Run the next handler
-			done <- true
-		}()
-
-		// Wait for the handler to finish or the context to be cancelled
-		select {
-		case <-done:
-			// If the handler finished, just return nil
-			return nil
-		case <-ctx.Done():
-			// If the context was cancelled, return a timeout error
-			return c.Status(fiber.StatusRequestTimeout).SendString("Request timed out")
-		}
-	})
+	LimitTestApp.Use(Timeout)
 
 	LimitTestApp.Get("/timeout", func(c *fiber.Ctx) error {
 		fmt.Println("/timeout called")
