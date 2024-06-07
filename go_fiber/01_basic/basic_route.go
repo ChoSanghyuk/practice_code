@@ -35,6 +35,21 @@ func BasicRoute(app *fiber.App) {
 		// => from is LAX and to is SFO
 	})
 
+	// http://localhost:3000/basic/wildcard/mandatory/parameter1
+	app.Get("/basic/wildcard/mandatory/+", func(c *fiber.Ctx) error {
+		return c.SendString("mandatory wildcard parameter : " + c.Params("+"))
+		// => mandatory wildcard parameter : parameter1
+	})
+
+	// http://localhost:3000/basic/wildcard/optional/parameter1
+	app.Get("/basic/wildcard/optional/*", func(c *fiber.Ctx) error {
+		if c.Params("*") != "" {
+			return c.SendString("Optional wildcard parameter : " + c.Params("*"))
+			// => Optional wildcard parameter : parameter1
+		}
+		return c.SendString("No Paramter come")
+	})
+
 	// http://localhost:3000/basic/static/sample.html
 	app.Static("/basic/static", "./01_basic/static")
 
