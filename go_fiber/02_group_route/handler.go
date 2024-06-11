@@ -14,5 +14,5 @@ func middleware(c *fiber.Ctx) error {
 }
 
 func handler(c *fiber.Ctx) error {
-	return c.SendString(c.OriginalURL())
+	return c.SendString("URL PATH : " + c.OriginalURL())
 }
