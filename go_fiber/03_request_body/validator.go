@@ -9,15 +9,11 @@ type ErrorResponse struct {
 	Value       any
 }
 
-type XValidator struct {
-	validator *validator.Validate
-}
+var myValidator = validator.New()
 
-var validate = validator.New()
-
-func (v XValidator) Validate(data any) []ErrorResponse {
+func Validate(data any) []ErrorResponse {
 	validationErrors := []ErrorResponse{}
-	errs := validate.Struct(data)
+	errs := myValidator.Struct(data)
 	if errs != nil {
 		for _, err := range errs.(validator.ValidationErrors) {
 			var elem ErrorResponse
@@ -33,12 +29,8 @@ func (v XValidator) Validate(data any) []ErrorResponse {
 	return validationErrors
 }
 
-var myValidator = &XValidator{
-	validator: validate,
-}
-
 func init() {
-	myValidator.validator.RegisterValidation("teener", func(fl validator.FieldLevel) bool {
+	myValidator.RegisterValidation("teener", func(fl validator.FieldLevel) bool {
 		return fl.Field().Int() >= 12 && fl.Field().Int() <= 18
 	})
 }

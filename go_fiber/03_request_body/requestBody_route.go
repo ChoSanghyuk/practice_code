@@ -7,7 +7,7 @@ func RequestBodyRoute(app *fiber.App) {
 	api := app.Group("/request_body")
 
 	api.Get("/print", BodyHandler)
-	api.Get("/parse", BodyParseHandler)
+	api.Get("/parse", BodyParserHandler)
 	api.Get("/valid_check", ValidateHandler)
 
 }

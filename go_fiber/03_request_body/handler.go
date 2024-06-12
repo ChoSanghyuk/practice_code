@@ -8,14 +8,15 @@ import (
 
 func BodyHandler(c *fiber.Ctx) error {
 	body := c.Body()
-	log.Info(body)
+	log.Info(string(body))
 	return c.SendString(string(body))
 }
 
-func BodyParseHandler(c *fiber.Ctx) error {
+func BodyParserHandler(c *fiber.Ctx) error {
 
 	user := &User{}
 	if err := c.BodyParser(user); err != nil {
+		log.Error(user)
 		return err
 	}
 	log.Info(user)

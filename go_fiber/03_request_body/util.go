@@ -9,7 +9,7 @@ import (
 )
 
 func ValidCheck(c *fiber.Ctx, s any) error {
-	if errs := myValidator.Validate(s); len(errs) > 0 && errs[0].Error {
+	if errs := Validate(s); len(errs) > 0 && errs[0].Error {
 		errMsgs := make([]string, 0)
 		for _, err := range errs {
 			if err.Tag == "required" {
