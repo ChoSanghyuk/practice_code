@@ -4,11 +4,16 @@ import (
 	basic "go_fiber/01_basic"
 	group_route "go_fiber/02_group_route"
 	requestbody "go_fiber/03_request_body"
+	middleware "go_fiber/04_middleware"
 
 	"github.com/gofiber/fiber/v2"
 )
 
 func AddRoute(app *fiber.App) {
+
+	app.Use(middleware.Logger)
+	app.Use(middleware.Recover)
+	app.Use(middleware.Timeout)
 
 	// 01_basic
 	basic.BasicRoute(app)
