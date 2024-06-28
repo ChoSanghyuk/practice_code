@@ -9,8 +9,6 @@ import (
 	"github.com/gofiber/fiber/v2/log"
 )
 
-var ts = time.Duration(3)
-
 func Logger(c *fiber.Ctx) error {
 
 	err := c.Next()
@@ -38,23 +36,26 @@ func Recover(c *fiber.Ctx) error {
 	return c.Next()
 }
 
-func Timeout(c *fiber.Ctx) error {
-	ctx, cancel := context.WithTimeout(context.Background(), ts*time.Second)
-	defer cancel()
+func Timeout(ts int) func(c *fiber.Ctx) error {
 
-	// 핸들러 고루틴에서 실행
-	done := make(chan error, 1)
-	go func() {
-		done <- c.Next()
-	}()
+	return func(c *fiber.Ctx) error {
+		ctx, cancel := context.WithTimeout(context.Background(), time.Duration(ts)*time.Second)
+		defer cancel()
 
-	// 핸들러의 응답 혹은 타임아웃을 기다림
-	select {
-	case err := <-done:
-		// 핸들러가 끝났다면, 그대로 종료
-		return err
-	case <-ctx.Done():
-		// 타임아웃 발생 시, ctx에 타임아웃 에러 저장하고 종료
-		return c.Status(fiber.StatusRequestTimeout).SendString("Request timed out")
+		// 핸들러 고루틴에서 실행
+		done := make(chan error, 1)
+		go func() {
+			done <- c.Next()
+		}()
+
+		// 핸들러의 응답 혹은 타임아웃을 기다림
+		select {
+		case err := <-done:
+			// 핸들러가 끝났다면, 그대로 종료
+			return err
+		case <-ctx.Done():
+			// 타임아웃 발생 시, ctx에 타임아웃 에러 저장하고 종료
+			return c.Status(fiber.StatusRequestTimeout).SendString("Request timed out")
+		}
 	}
 }

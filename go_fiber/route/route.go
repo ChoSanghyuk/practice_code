@@ -13,7 +13,7 @@ func AddRoute(app *fiber.App) {
 
 	app.Use(middleware.Logger)
 	app.Use(middleware.Recover)
-	app.Use(middleware.Timeout)
+	app.Use(middleware.Timeout(3))
 
 	// 01_basic
 	basic.BasicRoute(app)

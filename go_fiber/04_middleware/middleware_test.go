@@ -18,9 +18,7 @@ func init() {
 
 	LimitTestApp = fiber.New()
 
-	// LimitTestApp.Use(LimiterHandler)
-
-	timeoutApi := LimitTestApp.Group("timeout", Timeout)
+	timeoutApi := LimitTestApp.Group("timeout", Timeout(3))
 
 	timeoutApi.Get("/do", func(c *fiber.Ctx) error {
 		log.Info("timeout called")
