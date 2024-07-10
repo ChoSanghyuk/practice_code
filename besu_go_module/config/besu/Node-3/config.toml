@@ -9,11 +9,11 @@ network-id = 123
 
 # p2p
 p2p-host="127.0.0.1"
-p2p-port=30304
+p2p-port=30305
 
 # rpc
 rpc-http-enabled = true
-rpc-http-port=18545
+rpc-http-port=28545
 rpc-http-api = ["ETH", "NET", "CLIQUE"] # List of enabled RPC HTTP APIs
 rpc-http-cors-origins = ["all"] # Allowed CORS origins for HTTP
 host-allowlist = ["*"] # Allowed hosts for HTTP access
@@ -21,7 +21,7 @@ host-allowlist = ["*"] # Allowed hosts for HTTP access
 
 # Enable the GraphQL HTTP service
 graphql-http-enabled=true
-graphql-http-port=18547
+graphql-http-port=28547
 
 bootnodes = ["enode://0d3018f02cd9b81f0d003d1acec72f2a752c03609b77a5f40d091a1af9bc45559b837448f8754e080336e741519e8604cc415a3587b799aed625bf8e532d65e1@127.0.0.1:30303"]
 
