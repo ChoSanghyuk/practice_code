@@ -8,7 +8,7 @@ genesis-file = "/opt/besu/node/genesis.json"
 network-id = 123
 
 # p2p
-p2p-host="127.0.0.1"
+p2p-host="0.0.0.0"
 p2p-port=30305
 
 # rpc
