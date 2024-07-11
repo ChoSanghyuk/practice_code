@@ -1,0 +1,36 @@
+# version '3.9'
+
+services:
+  Node-1:
+    image: hyperledger/besu:latest
+    container_name: Node-1
+    network_mode: host
+    # ports:
+    #   - "30303:30303"
+    #   - "8545:8545"
+    #   - "8547:8547"
+    volumes:
+      - /home/chosh901/besu/Node-1:/opt/besu/node
+    command: --config-file=/opt/besu/node/config.toml
+  Node-2:
+    image: hyperledger/besu:latest
+    container_name: Node-2
+    network_mode: host
+    # ports:
+    #   - "30304:30304"
+    #   - "18545:18545"
+    #   - "18547:18547"
+    volumes:
+      - /home/chosh901/besu/Node-2:/opt/besu/node
+    command: --config-file=/opt/besu/node/config.toml
+  Node-3:
+    image: hyperledger/besu:latest
+    container_name: Node-3
+    network_mode: host
+    # ports:
+    #   - "30305:30305"
+    #   - "28545:28545"
+    #   - "28547:28547"
+    volumes:
+      - /home/chosh901/besu/Node-3:/opt/besu/node
+    command: --config-file=/opt/besu/node/config.toml
