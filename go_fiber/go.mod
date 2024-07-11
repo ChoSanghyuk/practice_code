@@ -1,6 +1,6 @@
 module go_fiber
 
-go 1.22.2
+go 1.21.1
 
 require github.com/gofiber/fiber/v3 v3.0.0-beta.2
 
