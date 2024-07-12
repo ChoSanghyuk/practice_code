@@ -13,7 +13,12 @@ docker container 실행
 ```sh
 docker run -v /home/chosh901/besu/Node-1:/opt/besu/node hyperledger/besu --config-file=/opt/besu/node/config.toml
 ```
-
+```sh
+besu --data-path=data --genesis-file=../cliqueGenesis.json  --network-id 123 --p2p-port=30304 --rpc-http-enabled --rpc-http-api=ETH,NET,CLIQUE --host-allowlist="*" --rpc-http-cors-origins="all" --rpc-http-port=8546
+```
+```sh
+docker run -v ./:/opt/besu/node --name testBesu --net besu_bridge hyperledger/besu --config-file=/opt/besu/node/config.toml
+```
 
 
 Node-1 위치에서 key 생성 명령어 수행
@@ -29,3 +34,11 @@ docker container로 besu 노드를 띄우는 경우에는 docker Network 설정�
 
 
 wsl -d Ubuntu
+
+curl -X POST --data '{"jsonrpc":"2.0","method":"clique_propose","params":["0xd6a98d4f51e8072ef3c994fcd619e28c6072c7cf", true], "id":1}' localhost:8545   
+docker run -v ./:/opt/besu/node --name testBesu2 --net besu_bridge -p 8547:8547 hyperledger/besu --config-file=/opt/besu/node/config.toml                
+
+
+ping -c 1 172.18.0.1  
+docker network inspect besu_bridge                                                                                                                
+docker inspect testBesu | grep IPAddress                                                                                                          
