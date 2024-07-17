@@ -2,9 +2,8 @@ package transaction
 
 import (
 	"fmt"
-	"go_module/transaction/info"
-	store "go_module/transaction/smart_contract"
-	"go_module/util"
+	"go_module/config"
+	contract "go_module/smart_contract"
 	"math/big"
 	"testing"
 	"time"
@@ -13,24 +12,33 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
-func TestDeploy(t *testing.T) {
-	pk := info.BesuKey["account1"]["privateKey"][2:]
-	abi, _ := store.MapStoreMetaData.GetAbi()
-	bin := store.MapStoreMetaData.Bin
+var addr = "0x42699A7612A82f1d9C36148af9C77354759b210b"
 
-	addr, txHash := Deploy(pk, abi, bin) // 0xE03Ef2490316bfF9808d936eEe70f23896F07548
+func TestDeploy(t *testing.T) {
+	// pk := info.BesuKey["account1"]["privateKey"][2:]
+
+	account := config.Config.Accounts["account1"]
+
+	abi, _ := contract.ContractMetaData.GetAbi()
+	bin := contract.ContractMetaData.Bin
+
+	addr, txHash := Deploy(account.PrivateKey[2:], abi, bin)
 	fmt.Println("생성된 컨트랙트 주소", addr)
 	fmt.Println("수행된 트랜잭션 해시", txHash)
+	/*
+		생성된 컨트랙트 주소 0x42699A7612A82f1d9C36148af9C77354759b210b
+		수행된 트랜잭션 해시 0x125a67bd36de9a0ab91bf86df5feb08ccf125166bfd318c6471314bb61aefa57
+	*/
 }
 
 func TestCall(t *testing.T) {
 
-	addr := "0xe52155361a36C7d445F2c6784B14Bf7A3C306e15" //"0x2114de86c8ea1fd8144c2f1e1e94c74e498afb1b" // "0xE03Ef2490316bfF9808d936eEe70f23896F07548"
-	abi, _ := store.MapStoreMetaData.GetAbi()            // store.StoreMetaData.GetAbi()
-	// method := "store"
+	abi, _ := contract.ContractMetaData.GetAbi()
 
 	rtn, err := Call(nil, addr, abi, "getAge", big.NewInt(1))
-	util.CheckErr(err, "Call 실패")
+	if err != nil {
+		fmt.Println(err, "Call 실패")
+	}
 
 	// a := fmt.Sprintf("%s", rtn)
 	fmt.Println(rtn)
@@ -43,13 +51,14 @@ const n = 1000000
 func TestMultiCall(t *testing.T) {
 	var rtns []interface{} = make([]interface{}, n)
 
-	addr := "0x2114de86c8ea1fd8144c2f1e1e94c74e498afb1b"
-	abi, _ := store.MapStoreMetaData.GetAbi()
+	abi, _ := contract.ContractMetaData.GetAbi()
 
 	address := common.HexToAddress(addr)
 
 	input, err := abi.Pack("getAge", big.NewInt(1))
-	util.CheckErr(err)
+	if err != nil {
+		fmt.Println(err)
+	}
 
 	msg := ethereum.CallMsg{
 		From: common.Address{},
@@ -60,7 +69,9 @@ func TestMultiCall(t *testing.T) {
 	s := time.Now().UnixMilli()
 	for i := 0; i < n; i++ {
 		rtn, err := callByMsgForTest(nil, msg)
-		util.CheckErr(err, "Call 실패")
+		if err != nil {
+			fmt.Println(err, "Call 실패")
+		}
 		rtns[i] = rtn
 	}
 	e := time.Now().UnixMilli()
@@ -75,13 +86,14 @@ func TestMultiCall(t *testing.T) {
 func TestMultiWithGoGroutineCall(t *testing.T) {
 	var rtns [][]byte = make([][]byte, n)
 
-	addr := "0x2114de86c8ea1fd8144c2f1e1e94c74e498afb1b"
-	abi, _ := store.MapStoreMetaData.GetAbi()
+	abi, _ := contract.ContractMetaData.GetAbi()
 
 	address := common.HexToAddress(addr)
 
 	input, err := abi.Pack("getAge", big.NewInt(1))
-	util.CheckErr(err)
+	if err != nil {
+		fmt.Println(err)
+	}
 
 	msg := ethereum.CallMsg{
 		From: common.Address{},
@@ -109,9 +121,9 @@ func TestMultiWithGoGroutineCall(t *testing.T) {
 
 func TestWrite(t *testing.T) {
 
-	pk := info.BesuKey["account1"]["privateKey"][2:]
-	addr := "0xe52155361a36C7d445F2c6784B14Bf7A3C306e15" //"0x2114de86c8ea1fd8144c2f1e1e94c74e498afb1b"
-	abi, _ := store.MapStoreMetaData.GetAbi()
+	pk := config.Config.Accounts["account1"].PrivateKey[2:]
+
+	abi, _ := contract.ContractMetaData.GetAbi()
 
 	rtn := Write(pk, addr, abi, "setAgeList", big.NewInt(1), big.NewInt(30))
 	fmt.Printf("%v", rtn.Hex())

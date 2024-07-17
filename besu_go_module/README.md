@@ -41,4 +41,69 @@ docker run -v ./:/opt/besu/node --name testBesu2 --net besu_bridge -p 8547:8547 
 
 ping -c 1 172.18.0.1  
 docker network inspect besu_bridge                                                                                                                
+
 docker inspect testBesu | grep IPAddress                                                                                                          
+- 이때 나오는 주소는 내부 영역(?)에서 사용되는 컨테이너의 IP 주소로 외부에서 접근하는 용도가 아님
+- 해당 주소는 같은 네트워크를 사용하는 컨테이너끼리 통신하기 위한 주소
+- 컨테이너끼리는 같은 네트워크를 사용하고 있어야 통신 가능
+
+포트 바인딩
+- 해당 컨테이너를 외부에서도 접근할 수 있도록 호스트의 포트와 컨테이너의 포트를 바인딩하는 것
+- 따라서, host network mode가 아니더라도 localhost:포트 로 요청해야 컨테이너에 요청 가능함
+
+네트워크 gateway
+- docker network inspect {네트워크} 했을 때 나오는 gateway 값은 the gateway serves as the default route for containers to communicate with other networks, including the host's network and the internet. This reserved IP address ensures that there's a dedicated point for routing traffic in and out of the Docker network.
+
+yaml file
+Use of -: Used to denote sequence items or elements in lists under a key in YAML.
+Keys in YAML: Defined without -, followed by a colon (:) and then the value.
+
+
+
+docker pull ethereum/solc:0.8.6
+
+```
+version: '3.8'
+
+networks:
+  besu_bridge:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.18.0.0/16   # Example subnet for the custom bridge network
+
+services:
+  testBesu:
+    image: your-besu-image:tag
+    networks:
+      - besu_bridge
+    # other service configuration options
+    # ...
+```
+
+
+
+docker run -v ~/Documents/git_repo/practice_code/besu_go_module/transaction/smart_contract/:/compile/ ethereum/solc:0.8.6 -o /compile/output --abi --bin ./compile/Storage.sol
+
+docker pull ethereum/client-go
+공식 ethereum/client-go 이미지에 abigen 설치되어 있지 않음. 별도 설정 필요
+```
+FROM golang:1.20-alpine
+
+# Install dependencies
+RUN apk add --no-cache git make gcc musl-dev
+
+# Install go-ethereum which includes abigen
+RUN go install github.com/ethereum/go-ethereum/cmd/abigen@latest
+
+# Set up the entrypoint to use abigen by default
+ENTRYPOINT ["abigen"]
+```
+=> 그냥 로컬에 go install로 설치하는 것이 더 간편
+go install github.com/ethereum/go-ethereum/cmd/abigen@latest
+
+~/go/bin/abigen --bin=./MapStorage.bin --abi=./MapStorage.abi --pkg=contract --out=../MapStorage.go
+
+
+:bulb: docker run -it  로 실행하지 않았다면 ctrl + p + q 로 빠져나오는거 안됨

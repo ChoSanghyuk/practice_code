@@ -21,5 +21,6 @@ host-allowlist = ["*"] # Allowed hosts for HTTP access
 
 # Enable the GraphQL HTTP service
 graphql-http-enabled=true
+graphql-http-host="0.0.0.0"
 graphql-http-port=8547
 

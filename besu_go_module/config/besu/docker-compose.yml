@@ -1,10 +1,20 @@
 # version '3.9'
 
+networks:
+  custom_bridge: # docker compose는 name을 유니크하게 유지하게 하기 위해, 현재 폴더명을 네트워크 이름 앞에 붙임
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.18.0.0/16
+
 services:
   Node-1:
-    image: hyperledger/besu:latest
+    image: hyperledger/besu:24.6.0
     container_name: Node-1
-    net: besu_bridge
+    networks: 
+      custom_bridge:
+        ipv4_address: 172.18.0.2
     ports:
       - "30303:30303"
       - "8545:8545"
@@ -13,10 +23,11 @@ services:
       - ./Node-1:/opt/besu/node
     command: --config-file=/opt/besu/node/config.toml
   Node-2:
-    image: hyperledger/besu:latest
+    image: hyperledger/besu:24.6.0
     container_name: Node-2
     networks:
-      - besu_bridge
+      custom_bridge:
+        ipv4_address: 172.18.0.3
     ports:
       - "30304:30304"
       - "18545:18545"
@@ -25,10 +36,11 @@ services:
       - ./Node-2:/opt/besu/node
     command: --config-file=/opt/besu/node/config.toml
   Node-3:
-    image: hyperledger/besu:latest
+    image: hyperledger/besu:24.6.0
     container_name: Node-3
     networks:
-      - besu_bridge
+      custom_bridge:
+        ipv4_address: 172.18.0.4
     ports:
       - "30305:30305"
       - "28545:28545"

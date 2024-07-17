@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/ecdsa"
 	"fmt"
+	"go_module/config"
 	"log"
 	"math/big"
 	"strconv"
@@ -15,9 +16,6 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
-
-	"go_module/transaction/info" // for demo
-	"go_module/util"
 )
 
 var chainID *big.Int
@@ -27,18 +25,24 @@ var client *ethclient.Client
 
 func init() {
 	// t : temp
-	t1, err := strconv.ParseInt(info.BesuNetwork["chainId"], 10, 64)
-	util.CheckErr(err, "chain Id Int 변환 시 오류")
+	t1, err := strconv.ParseInt(config.Config.Network.ChainId, 10, 64)
+	if err != nil {
+		fmt.Println(err, "chain Id Int 변환 시 오류")
+	}
 	chainID = big.NewInt(t1)
 
-	url = info.BesuNetwork["url"]
+	url = config.Config.Network.Url
 
-	t2, err := strconv.ParseUint(info.BesuNetwork["gasLimit"][2:], 16, 64)
-	util.CheckErr(err, "gasLimit Uint 변환 시 오류")
+	t2, err := strconv.ParseUint(config.Config.Network.GasLimit[2:], 16, 64)
+	if err != nil {
+		fmt.Println(err, "gasLimit Uint 변환 시 오류")
+	}
 	gasLimit = t2
 
 	client, err = ethclient.Dial(url)
-	util.CheckErr(err, "ethclient.Dial 시 오류")
+	if err != nil {
+		fmt.Println(err, "ethclient.Dial 시 오류")
+	}
 }
 
 // fmt.Println(address.Hex())   // 0x147B8eb97fD247D06C4006D269c90C1908Fb5D54
@@ -47,8 +51,12 @@ func Deploy(pk string, abi *abi.ABI, bin string, params ...interface{}) (string,
 
 	auth := CreateAuth(pk)
 
-	address, tx, contract, err := bind.DeployContract(auth, *abi, common.FromHex(bin), client, params)
-	util.CheckErr(err, "Deploy 시 실패")
+	// Important! params... 처럼 Input을 풀지 않으면, [[]]와 같이 이중 구조로 감싸여짐
+	address, tx, contract, err := bind.DeployContract(auth, *abi, common.FromHex(bin), client, params...)
+	if err != nil {
+		fmt.Println(err, "Deploy 시 실패")
+		return "", common.Hash{}
+	}
 	_ = contract
 
 	return address.Hex(), tx.Hash()
@@ -66,7 +74,9 @@ func Call(blockNumber *big.Int, addr string, abi *abi.ABI, method string, params
 
 	address := common.HexToAddress(addr)
 	input, err := abi.Pack(method, params...)
-	util.CheckErr(err, "abi Pack시 에러 발생")
+	if err != nil {
+		fmt.Println(err, "abi Pack시 에러 발생")
+	}
 
 	msg := ethereum.CallMsg{
 		From: common.Address{},
@@ -81,7 +91,9 @@ func Call(blockNumber *big.Int, addr string, abi *abi.ABI, method string, params
 func CreateAuth(pk string) *bind.TransactOpts {
 
 	privateKey, err := crypto.HexToECDSA(pk)
-	util.CheckErr(err, "crypto.HexToECDSA 시 오류")
+	if err != nil {
+		fmt.Println(err, "crypto.HexToECDSA 시 오류")
+	}
 
 	publicKey := privateKey.Public()
 
@@ -92,13 +104,19 @@ func CreateAuth(pk string) *bind.TransactOpts {
 
 	fromAddress := crypto.PubkeyToAddress(*publicKeyECDSA)
 	nonce, err := client.PendingNonceAt(context.Background(), fromAddress)
-	util.CheckErr(err, "PendingNonceAt 시 오류")
+	if err != nil {
+		fmt.Println(err, "PendingNonceAt 시 오류")
+	}
 
 	gasPrice, err := client.SuggestGasPrice(context.Background())
-	util.CheckErr(err, "SuggestGasPrice 시 오류")
+	if err != nil {
+		fmt.Println(err, "SuggestGasPrice 시 오류")
+	}
 
 	auth, err := bind.NewKeyedTransactorWithChainID(privateKey, chainID)
-	util.CheckErr(err, "NewKeyedTransactorWithChainID 시 오류")
+	if err != nil {
+		fmt.Println(err, "NewKeyedTransactorWithChainID 시 오류")
+	}
 
 	auth.Nonce = big.NewInt(int64(nonce))
 	auth.Value = big.NewInt(0) // in wei
@@ -112,7 +130,9 @@ func CreateAuth(pk string) *bind.TransactOpts {
 func craftSignSendTx(pk string, to *common.Address, value *big.Int, data []byte) common.Hash {
 
 	privateKey, err := crypto.HexToECDSA(pk)
-	util.CheckErr(err, "crypto.HexToECDSA 시 오류")
+	if err != nil {
+		fmt.Println(err, "crypto.HexToECDSA 시 오류")
+	}
 
 	publicKey := privateKey.Public()
 	publicKeyECDSA, ok := publicKey.(*ecdsa.PublicKey)
@@ -136,10 +156,14 @@ func craftSignSendTx(pk string, to *common.Address, value *big.Int, data []byte)
 	})
 
 	signedTx, err := signTx(tx, privateKey)
-	util.CheckErr(err, "Sign 실패")
+	if err != nil {
+		fmt.Println(err, "Sign 실패")
+	}
 
 	err = client.SendTransaction(context.Background(), signedTx)
-	util.CheckErr(err, "Send 실패")
+	if err != nil {
+		fmt.Println(err, "Send 실패")
+	}
 
 	return signedTx.Hash()
 }
