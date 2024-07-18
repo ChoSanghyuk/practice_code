@@ -2,27 +2,37 @@ package go_error
 
 import (
 	"errors"
-	"go_practice/go_error/types"
+	"fmt"
 	"testing"
+
+	"github.com/go-playground/assert/v2"
 )
 
-func TestGenCusoError1(t *testing.T) {
+func TestErrorJoin(t *testing.T) {
 
-	var err1 error = errors.Join(CustomError1, errors.New("custom error 1"))
-	errors.Is(err1, CustomError1)
+	var err1 error = errors.Join(Err1, Err2)
+
+	fmt.Println(err1.Error())
+	assert.IsEqual(errors.Is(err1, Err1), true)
 
 }
 
-func main() {
+func TestErrorJoin2(t *testing.T) {
 
-	err := types.GenCusoError2("custom error 2")
+	var err1 error = errors.Join(Err1, Err2)
 
-	switch err.(type) {
-	case types.CustomError1:
-		println("CustomError1")
-	case types.CustomError2:
-		println("CustomError2")
-	default:
-		println("Unknown error")
-	}
+	fmt.Println(err1.Error())
+	assert.IsEqual(errors.Is(err1, Err2), true)
+
+}
+
+func TestErrorWrap(t *testing.T) {
+
+	var err1 error = fmt.Errorf("Wrapped Error %w %w", Err1, ErrExistCheck)
+
+	fmt.Println(err1.Error())
+	assert.IsEqual(errors.Is(err1, Err1), true)
+	assert.IsEqual(errors.Is(err1, ErrExistCheck), true)
+
+	fmt.Println(errors.Unwrap(err1))
 }
