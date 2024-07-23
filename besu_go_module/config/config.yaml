@@ -3,6 +3,7 @@ network:
   chainId: "1337"
   url: "http://localhost:8545"
   gasLimit: "0xa00000"
+  graphql: "http://localhost:8547"
 
 node:
   node1: 

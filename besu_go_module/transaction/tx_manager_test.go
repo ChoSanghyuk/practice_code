@@ -3,26 +3,25 @@ package transaction
 import (
 	"fmt"
 	"go_module/config"
-	contract "go_module/smart_contract"
 	"math/big"
 	"testing"
 	"time"
 
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/stretchr/testify/assert"
 )
 
 var addr = "0x42699A7612A82f1d9C36148af9C77354759b210b"
+var contractAbi, _ = AgeInfoStrageMetaData.GetAbi()
+var contractBin = AgeInfoStrageMetaData.Bin
 
 func TestDeploy(t *testing.T) {
 	// pk := info.BesuKey["account1"]["privateKey"][2:]
 
 	account := config.Config.Accounts["account1"]
 
-	abi, _ := contract.ContractMetaData.GetAbi()
-	bin := contract.ContractMetaData.Bin
-
-	addr, txHash := Deploy(account.PrivateKey[2:], abi, bin)
+	addr, txHash := Deploy(account.PrivateKey[2:], contractAbi, contractBin)
 	fmt.Println("생성된 컨트랙트 주소", addr)
 	fmt.Println("수행된 트랜잭션 해시", txHash)
 	/*
@@ -33,15 +32,14 @@ func TestDeploy(t *testing.T) {
 
 func TestCall(t *testing.T) {
 
-	abi, _ := contract.ContractMetaData.GetAbi()
-
-	rtn, err := Call(nil, addr, abi, "getAge", big.NewInt(1))
+	rtn, err := Call(nil, addr, contractAbi, "getAge", big.NewInt(1))
 	if err != nil {
 		fmt.Println(err, "Call 실패")
 	}
 
-	// a := fmt.Sprintf("%s", rtn)
-	fmt.Println(rtn)
+	fmt.Printf("%v", rtn)
+
+	assert.NotNil(t, rtn)
 
 }
 
@@ -51,11 +49,9 @@ const n = 1000000
 func TestMultiCall(t *testing.T) {
 	var rtns []interface{} = make([]interface{}, n)
 
-	abi, _ := contract.ContractMetaData.GetAbi()
-
 	address := common.HexToAddress(addr)
 
-	input, err := abi.Pack("getAge", big.NewInt(1))
+	input, err := contractAbi.Pack("getAge", big.NewInt(1))
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -86,11 +82,9 @@ func TestMultiCall(t *testing.T) {
 func TestMultiWithGoGroutineCall(t *testing.T) {
 	var rtns [][]byte = make([][]byte, n)
 
-	abi, _ := contract.ContractMetaData.GetAbi()
-
 	address := common.HexToAddress(addr)
 
-	input, err := abi.Pack("getAge", big.NewInt(1))
+	input, err := contractAbi.Pack("getAge", big.NewInt(1))
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -123,8 +117,6 @@ func TestWrite(t *testing.T) {
 
 	pk := config.Config.Accounts["account1"].PrivateKey[2:]
 
-	abi, _ := contract.ContractMetaData.GetAbi()
-
-	rtn := Write(pk, addr, abi, "setAgeList", big.NewInt(1), big.NewInt(30))
+	rtn := Write(pk, addr, contractAbi, "setAgeList", big.NewInt(1), big.NewInt(30))
 	fmt.Printf("%v", rtn.Hex())
 }

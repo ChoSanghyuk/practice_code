@@ -26,6 +26,7 @@ Node-1 위치에서 key 생성 명령어 수행
 sudo docker run -v ./data:/opt/besu/data hyperledger/besu --data-path=data public-key export-address --to=data/node1Address
 ```
 
+
 docker container로 besu 노드를 띄우는 경우에는 docker Network 설정이 필수적임
 네트워크 설정 없이, container를 띄우게 되면, 로그 상에는 127.0.0.1(localhost)로 p2p-host와 enode url이 표시되지만, 이는 컨테이너 내부에서 localhost로 기동된 것일 뿐, 실제로는 container 자체 주소를 가지어, 해당 주소로 접근해야 함.
 따라서, network_mode를 host로 설정하여, 호스트의 네트워크 환경을 그대로 사용하게 함
@@ -84,7 +85,7 @@ services:
 
 
 
-docker run -v ~/Documents/git_repo/practice_code/besu_go_module/transaction/smart_contract/:/compile/ ethereum/solc:0.8.6 -o /compile/output --abi --bin ./compile/Storage.sol
+docker run -v ./:/compile/ ethereum/solc:0.8.6 -o /compile/output --abi --bin ./compile/AgeInfoStorage.sol
 
 docker pull ethereum/client-go
 공식 ethereum/client-go 이미지에 abigen 설치되어 있지 않음. 별도 설정 필요
@@ -103,7 +104,16 @@ ENTRYPOINT ["abigen"]
 => 그냥 로컬에 go install로 설치하는 것이 더 간편
 go install github.com/ethereum/go-ethereum/cmd/abigen@latest
 
-~/go/bin/abigen --bin=./MapStorage.bin --abi=./MapStorage.abi --pkg=contract --out=../MapStorage.go
+~/go/bin/abigen --bin=./output/AgeInfoStorage.bin --abi=./output/AgeInfoStorage.abi --pkg=sample_contract --out=./AgeInfoStorage.go
 
 
 :bulb: docker run -it  로 실행하지 않았다면 ctrl + p + q 로 빠져나오는거 안됨
+
+
+
+
+curl -X POST -H "Content-Type: application/json" --data '{ "query": "{__schema { queryType { fields { name } }}}"}' http://172.18.0.2:8547/graphql
+
+port binding 없이는 로컬 호스트에서 http 요청으로 접근할 순 없음!
+For a port to be accessible to containers or non-docker hosts on different networks, that port must be published using the -p or --publish flag
+docs.docker.com/network/drivers/bridge

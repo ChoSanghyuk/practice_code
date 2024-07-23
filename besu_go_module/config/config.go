@@ -17,9 +17,10 @@ type Configuration struct {
 }
 
 type Network struct {
-	ChainId  string `yaml:"chainId"`
-	Url      string `yaml:"url"`
-	GasLimit string `yaml:"gasLimit"`
+	ChainId    string `yaml:"chainId"`
+	GasLimit   string `yaml:"gasLimit"`
+	Url        string `yaml:"url"`
+	GraphqlUrl string `yaml:"graphql"`
 }
 
 type Node struct {

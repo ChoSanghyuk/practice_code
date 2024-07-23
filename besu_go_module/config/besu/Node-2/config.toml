@@ -2,7 +2,7 @@
 data-path = "/opt/besu/node/data"  # 실행 위치를 기준으로 한 상대경로
 
 # 사용자 정의 genesis 파일의 경로이다.
-genesis-file = "/opt/besu/node/genesis.json"
+genesis-file = "/opt/besu/genesis/genesis.json"
 
 # Network identifier
 network-id = 123

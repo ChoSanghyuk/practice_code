@@ -17,8 +17,8 @@ func TestGraphqlSend(t *testing.T) {
 	fmt.Println("Response : ", rtn)
 }
 
-var call1 = Call{To: "0x2114de86c8ea1fd8144c2f1e1e94c74e498afb1b", Data: "0x0e37008a0000000000000000000000000000000000000000000000000000000000000001"}
-var call2 = Call{To: "0x2114de86c8ea1fd8144c2f1e1e94c74e498afb1b", Data: "0x0e37008a0000000000000000000000000000000000000000000000000000000000000001"}
+var call1 = Call{To: "0x42699A7612A82f1d9C36148af9C77354759b210b", Data: "0x0e37008a0000000000000000000000000000000000000000000000000000000000000001"}
+var call2 = Call{To: "0x42699A7612A82f1d9C36148af9C77354759b210b", Data: "0x0e37008a0000000000000000000000000000000000000000000000000000000000000001"}
 
 // Two Calls 소요 시간 :  5
 func TestGraphqlSendWithTwoCalls(t *testing.T) {
@@ -31,7 +31,7 @@ func TestGraphqlSendWithTwoCalls(t *testing.T) {
 
 func TestGraphqlSendWithThousandCalls(t *testing.T) {
 
-	var calls []Call = make([]Call, 832)
+	var calls []Call = make([]Call, 1000)
 
 	for i := 0; i < len(calls); i++ {
 		calls[i] = call1
@@ -76,10 +76,10 @@ func TestGraphqlSendWithMultiCalls(t *testing.T) {
 		calls[i] = call1
 	}
 	s := time.Now().UnixMilli()
-	rtn := BesuMultiCall(big.NewInt(24001), calls...)
+	rtn := BesuMultiCall(nil, calls...)
 	e := time.Now().UnixMilli()
-	// fmt.Println("rtn : ", rtn)
-	_ = rtn
+	fmt.Println("rtn : ", rtn)
+	// _ = rtn
 	fmt.Printf("Graphql 멀티스레드 Calls with %d 소요 시간 %d", n, e-s)
 }
 

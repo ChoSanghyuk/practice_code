@@ -4,15 +4,15 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"go_module/config"
 	"io"
 	"math/big"
 	"net/http"
 	"strings"
 )
 
-const url string = "http://localhost:8547"
-
-var CallLimit int = 66
+var url string = config.Config.Network.GraphqlUrl
+var CallLimit int = 100
 
 type Call struct {
 	To   string `json:"to"`

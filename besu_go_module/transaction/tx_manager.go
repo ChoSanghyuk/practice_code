@@ -3,6 +3,7 @@ package transaction
 import (
 	"context"
 	"crypto/ecdsa"
+	"errors"
 	"fmt"
 	"go_module/config"
 	"log"
@@ -70,12 +71,12 @@ func Write(pk string, addr string, abi *abi.ABI, method string, params ...interf
 	return craftSignSendTx(pk, &address, nil, input)
 }
 
-func Call(blockNumber *big.Int, addr string, abi *abi.ABI, method string, params ...interface{}) ([]byte, error) { // blockNumber : can be nil
+func Call(blockNumber *big.Int, addr string, abi *abi.ABI, method string, params ...interface{}) ([]interface{}, error) { // blockNumber : can be nil
 
 	address := common.HexToAddress(addr)
 	input, err := abi.Pack(method, params...)
 	if err != nil {
-		fmt.Println(err, "abi Pack시 에러 발생")
+		return nil, errors.Join(errors.New(method+" Call 시, abi Pack Error"), err)
 	}
 
 	msg := ethereum.CallMsg{
@@ -84,7 +85,17 @@ func Call(blockNumber *big.Int, addr string, abi *abi.ABI, method string, params
 		Data: input,
 	}
 
-	return client.CallContract(context.Background(), msg, blockNumber) // CallContract(ctx context.Context, call ethereum.CallMsg, blockNumber *big.Int) ([]byte, error)
+	raw, err := client.CallContract(context.Background(), msg, blockNumber) // CallContract(ctx context.Context, call ethereum.CallMsg, blockNumber *big.Int) ([]byte, error)
+	if err != nil {
+		return nil, errors.Join(fmt.Errorf("%s Call 시, client Call 에러 발생", method), err)
+	}
+
+	data, err := abi.Unpack(method, raw)
+	if err != nil {
+		return nil, errors.Join(fmt.Errorf("%s Call 시, abi Unpack Error", method), err)
+	}
+
+	return data, nil
 
 }
 
