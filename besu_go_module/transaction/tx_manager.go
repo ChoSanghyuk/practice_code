@@ -50,7 +50,7 @@ func init() {
 // fmt.Println(tx.Hash().Hex()) // 0xdae8ba5444eefdc99f4d45cd0c4f24056cba6a02cefbf78066ef9f4188ff7dc0
 func Deploy(pk string, abi *abi.ABI, bin string, params ...interface{}) (string, common.Hash) {
 
-	auth := CreateAuth(pk)
+	auth, _ := CreateAuth(pk)
 
 	// Important! params... 처럼 Input을 풀지 않으면, [[]]와 같이 이중 구조로 감싸여짐
 	address, tx, contract, err := bind.DeployContract(auth, *abi, common.FromHex(bin), client, params...)
@@ -99,45 +99,44 @@ func Call(blockNumber *big.Int, addr string, abi *abi.ABI, method string, params
 
 }
 
-func CreateAuth(pk string) *bind.TransactOpts {
+func CreateAuth(pk string) (*bind.TransactOpts, error) {
 
 	privateKey, err := crypto.HexToECDSA(pk)
 	if err != nil {
-		fmt.Println(err, "crypto.HexToECDSA 시 오류")
+		return nil, fmt.Errorf("crypto.HexToECDSA 시 오류 %w", err)
 	}
 
 	publicKey := privateKey.Public()
 
 	publicKeyECDSA, ok := publicKey.(*ecdsa.PublicKey)
 	if !ok {
-		log.Fatal("cannot assert type: publicKey is not of type *ecdsa.PublicKey")
+		return nil, fmt.Errorf("cannot assert type: publicKey is not of type *ecdsa.PublicKey")
 	}
 
 	fromAddress := crypto.PubkeyToAddress(*publicKeyECDSA)
 	nonce, err := client.PendingNonceAt(context.Background(), fromAddress)
 	if err != nil {
-		fmt.Println(err, "PendingNonceAt 시 오류")
+		return nil, fmt.Errorf("PendingNonceAt 시 오류 %w", err)
 	}
 
 	gasPrice, err := client.SuggestGasPrice(context.Background())
 	if err != nil {
-		fmt.Println(err, "SuggestGasPrice 시 오류")
+		return nil, fmt.Errorf("SuggestGasPrice 시 오류 %w", err)
 	}
 
 	auth, err := bind.NewKeyedTransactorWithChainID(privateKey, chainID)
 	if err != nil {
-		fmt.Println(err, "NewKeyedTransactorWithChainID 시 오류")
+		return nil, fmt.Errorf("NewKeyedTransactorWithChainID 시 오류 %w", err)
 	}
 
 	auth.Nonce = big.NewInt(int64(nonce))
 	auth.Value = big.NewInt(0) // in wei
-	auth.GasLimit = gasLimit   // in units
+	auth.GasLimit = gasLimit   // in unitss
 	auth.GasPrice = gasPrice
 
-	return auth
+	return auth, nil
 }
 
-// client.TransactionReceipt(context.Background(), signedTx.Hash())
 func craftSignSendTx(pk string, to *common.Address, value *big.Int, data []byte) common.Hash {
 
 	privateKey, err := crypto.HexToECDSA(pk)

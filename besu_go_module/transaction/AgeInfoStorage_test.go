@@ -1,19 +1,20 @@
 package transaction
 
 import (
+	"go_module/config"
 	"math/big"
 	"testing"
 
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/stretchr/testify/assert"
 )
 
+var privateKey1 = config.Config.Accounts["account1"].PrivateKey[2:]
+
 func TestDeployAgeInfoStorage(t *testing.T) {
 
-	auth := CreateAuth(privateKey1)
+	auth, _ := CreateAuth(privateKey1)
 
 	client, err := ethclient.Dial(url)
 	if err != nil {
@@ -28,26 +29,22 @@ func TestDeployAgeInfoStorage(t *testing.T) {
 	t.Logf("컨트랙트 주소 : %s", addr)
 }
 
-func TestWriteAndCallAgnInfoStorage(t *testing.T) {
+func TestWriteAgnInfoStorage(t *testing.T) {
 	contract, err := NewAgeInfoStrage(common.HexToAddress("0x42699A7612A82f1d9C36148af9C77354759b210b"), client)
 	if err != nil {
 		t.Error(err)
 	}
 
-	key, err := crypto.HexToECDSA(privateKey1)
-	if err != nil {
-		t.Error(err)
-	}
-	auth, err := bind.NewKeyedTransactorWithChainID(key, chainID)
+	auth, err := CreateAuth(privateKey1)
 	if err != nil {
 		t.Error(err)
 	}
 
-	tx, err := contract.AgeInfoStrageTransactor.SetAge(auth, "Jo", big.NewInt(30))
+	tx, err := contract.AgeInfoStrageTransactor.SetAge(auth, "Jo", big.NewInt(50))
 	if err != nil {
 		t.Error(err)
 	}
-	t.Log(tx)
+	t.Log(tx.Hash())
 }
 
 func TestCallAgnInfoStorage(t *testing.T) {
@@ -61,5 +58,7 @@ func TestCallAgnInfoStorage(t *testing.T) {
 		t.Error(err)
 	}
 
-	assert.Equal(t, big.NewInt(30), age)
+	t.Log(age)
+
+	assert.Equal(t, big.NewInt(50), age)
 }

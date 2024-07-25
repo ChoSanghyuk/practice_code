@@ -1,154 +1,62 @@
 package besu_graphql
 
 import (
-	"bytes"
-	"encoding/json"
+	"context"
 	"fmt"
 	"go_module/config"
-	"io"
 	"math/big"
-	"net/http"
-	"strings"
-)
 
-var url string = config.Config.Network.GraphqlUrl
-var CallLimit int = 100
+	"github.com/machinebox/graphql"
+)
 
 type Call struct {
 	To   string `json:"to"`
 	Data string `json:"data"`
 }
 
-func BesuMultiCall(bn *big.Int, params ...Call) []string {
+type BlockCallResp struct {
+	Block struct {
+		CallResp struct {
+			Data    string `json:"data"`
+			GasUsed string `json:"gasUsed"`
+			Status  string `json:"status"`
+		} `json:"call1"`
+	} `json:"block"`
+}
 
-	n := len(params)/CallLimit + 1
-
-	var rtn []string = make([]string, n)
-
-	c := make(chan string)
-	for t := 0; t < n; t++ {
-		s := t * CallLimit
-		e := s + CallLimit
-		if e > len(params) {
-			e = len(params)
+var callQuery = `
+	query getCall($blockNumber: Long, $callData: CallData!) {
+		block(number: $blockNumber){
+			call1 : call(data: $callData){
+						data, 
+						gasUsed, 
+						status
+					}
+			}
 		}
-		go BesuCallTest(c, bn, params[s:e]...)
-	}
+`
+var _ = `
+	mutation($mutData: Bytes!) {
+		t1: sendRawTransaction(data: $mutData)
+		}
+`
 
-	for t := 0; t < n; t++ {
-		rtn[t] = <-c
-	}
-	return rtn
-}
+var client = graphql.NewClient(config.Config.Network.GraphqlUrl)
 
-func BesuCallTest(c chan string, bn *big.Int, params ...Call) {
-	q := makeCallMessage(bn, params...)
-	rtn := graphqlSend(q)
-	c <- rtn
-}
+func BesuCall_(bn *big.Int, callData Call) (BlockCallResp, error) {
 
-func BesuCall(bn *big.Int, params ...Call) string {
-	q := makeCallMessage(bn, params...)
-	rtn := graphqlSend(q)
-	return rtn
-}
+	req := graphql.NewRequest(callQuery)
 
-func BesuMut(params ...string) string {
-	q := makeMutMessage(params...)
-	rtn := graphqlSend(q)
-	return rtn
-}
+	req.Var("blockNumber", bn)
+	req.Var("callData", callData)
 
-type besuGraphQL = struct {
-	Query    string                 `json:"query"`
-	Variable map[string]interface{} `json:"variables"`
-}
+	var res BlockCallResp
 
-func newBesuCall(i string, b string, c string, v map[string]interface{}) besuGraphQL { // input, block, call, variable
-	return besuGraphQL{
-		Query:    fmt.Sprintf("query getCall( %s ) {block%s{ %s }}", i, b, c),
-		Variable: v,
-	}
-}
-
-func newBesuMut(i string, m string, v map[string]interface{}) besuGraphQL {
-	return besuGraphQL{
-		Query:    fmt.Sprintf("mutation( %s ) {%s}", i, m),
-		Variable: v,
-	}
-}
-
-func graphqlSend(query string) string {
-
-	req, err := http.NewRequest("POST", url, bytes.NewBufferString(query))
+	err := client.Run(context.Background(), req, &res)
 	if err != nil {
-		panic(err)
+		return BlockCallResp{}, fmt.Errorf("client run 에러 %w", err)
 	}
 
-	req.Header.Set("Content-Type", "application/json")
-
-	client := &http.Client{}
-	resp, err := client.Do(req)
-
-	if err != nil {
-		panic(err)
-	}
-	defer resp.Body.Close()
-
-	body, _ := io.ReadAll(resp.Body)
-
-	return string(body)
-
-}
-
-func makeCallMessage(bn *big.Int, params ...Call) string {
-
-	var bf string
-	if bn == nil || bn.Cmp(big.NewInt(0)) == 0 {
-		bf = ""
-	} else {
-		bf = fmt.Sprintf("(number: %v)", bn)
-	}
-
-	// RequestString form
-	inf := "$input%d: CallData!"                   // input form
-	cf := "call%d : call(data: $%s){data, status}" // call form
-
-	is := make([]string, len(params))  // input slice
-	cs := make([]string, len(params))  // call slice
-	vm := make(map[string]interface{}) // variable map
-
-	for i, p := range params {
-		n := i + 1
-		is[i] = fmt.Sprintf(inf, n)
-		cs[i] = fmt.Sprintf(cf, n, fmt.Sprintf("input%d", n))
-		vm[fmt.Sprintf("input%d", n)] = p
-	}
-
-	mc := newBesuCall(strings.Join(is, ", "), bf, strings.Join(cs, ", "), vm)
-	r, _ := json.Marshal(mc)
-	return string(r)
-}
-
-func makeMutMessage(params ...string) string {
-
-	// RequestString form
-	inf := "$input%d: Bytes!"                   // input form
-	mf := "t%d : sendRawTransaction(data: $%s)" // mutation form
-
-	is := make([]string, len(params))  // input slice
-	ms := make([]string, len(params))  // mutation slice
-	vm := make(map[string]interface{}) // variable map
-
-	for i, p := range params {
-		n := i + 1
-		is[i] = fmt.Sprintf(inf, n)
-		ms[i] = fmt.Sprintf(mf, n, fmt.Sprintf("input%d", n))
-		vm[fmt.Sprintf("input%d", n)] = p
-	}
-
-	mc := newBesuMut(strings.Join(is, ", "), strings.Join(ms, ", "), vm)
-	r, _ := json.Marshal(mc)
-	return string(r)
+	return res, nil
 
 }
