@@ -16,7 +16,7 @@ import (
 var acnt1Pk = config.Config.Accounts["account1"].PrivateKey[2:] //info.BesuKey["account1"]["privateKey"][2:]
 var acnt1Addr = config.Config.Accounts["account1"].Address
 var acnt2Addr = config.Config.Accounts["account2"].Address
-var auth = transaction.CreateAuth(acnt1Pk)
+var auth = transaction.CreateTxOpts(acnt1Pk)
 var url = config.Config.Network.Url
 var client, _ = ethclient.Dial(url)
 var instance *Erc20 = nil

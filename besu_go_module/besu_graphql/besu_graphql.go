@@ -35,7 +35,7 @@ var callQuery = `
 			}
 		}
 `
-var _ = `
+var mutQuery = `
 	mutation($mutData: Bytes!) {
 		t1: sendRawTransaction(data: $mutData)
 		}
@@ -43,7 +43,7 @@ var _ = `
 
 var client = graphql.NewClient(config.Config.Network.GraphqlUrl)
 
-func BesuCall_(bn *big.Int, callData Call) (BlockCallResp, error) {
+func BesuCall(bn *big.Int, callData Call) (BlockCallResp, error) {
 
 	req := graphql.NewRequest(callQuery)
 
@@ -58,5 +58,38 @@ func BesuCall_(bn *big.Int, callData Call) (BlockCallResp, error) {
 	}
 
 	return res, nil
+}
+
+func BesuMutliCall(bn *big.Int, callDatas []Call) (BlockCallResp, error) {
+
+	req := graphql.NewRequest(callQuery)
+
+	req.Var("blockNumber", bn)
+	req.Var("callData", callDatas)
+
+	var res BlockCallResp
+
+	err := client.Run(context.Background(), req, &res)
+	if err != nil {
+		return BlockCallResp{}, fmt.Errorf("client run 에러 %w", err)
+	}
+
+	return res, nil
+}
+
+func BesuWrite(tx string) (string, error) {
+
+	req := graphql.NewRequest(mutQuery)
+
+	req.Var("mutData", tx)
+
+	var txHash string
+
+	err := client.Run(context.Background(), req, &txHash)
+	if err != nil {
+		return "", fmt.Errorf("client run 에러 %w", err)
+	}
+
+	return txHash, nil
 
 }

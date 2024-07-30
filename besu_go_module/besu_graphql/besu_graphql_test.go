@@ -6,9 +6,10 @@ import (
 	"testing"
 )
 
-func TestBesuCall_(t *testing.T) {
+var cntr_addr = "0x42699A7612A82f1d9C36148af9C77354759b210b"
 
-	addr := "0x42699A7612A82f1d9C36148af9C77354759b210b"
+func TestBesuCall(t *testing.T) {
+
 	abi, err := transaction.AgeInfoStrageMetaData.GetAbi()
 	if err != nil {
 		t.Error(err)
@@ -19,8 +20,8 @@ func TestBesuCall_(t *testing.T) {
 		t.Error(err)
 	}
 
-	rtn, err := BesuCall_(nil, Call{
-		To:   addr,
+	rtn, err := BesuCall(nil, Call{
+		To:   cntr_addr,
 		Data: "0x" + hex.EncodeToString(data),
 	})
 	if err != nil {
@@ -28,6 +29,20 @@ func TestBesuCall_(t *testing.T) {
 	}
 
 	t.Log(rtn)
+}
+
+func TestBesuWrite(t *testing.T) {
+
+	abi, err := transaction.AgeInfoStrageMetaData.GetAbi()
+	if err != nil {
+		t.Error(err)
+	}
+
+	data, err := abi.Pack("setAge", "min", 29)
+	if err != nil {
+		t.Error(err)
+	}
+
 }
 
 // func TestGraphqlSend(t *testing.T) {

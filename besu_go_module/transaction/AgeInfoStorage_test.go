@@ -14,7 +14,7 @@ var privateKey1 = config.Config.Accounts["account1"].PrivateKey[2:]
 
 func TestDeployAgeInfoStorage(t *testing.T) {
 
-	auth, _ := CreateAuth(privateKey1)
+	auth, _ := CreateTxOpts(privateKey1, nil)
 
 	client, err := ethclient.Dial(url)
 	if err != nil {
@@ -35,7 +35,7 @@ func TestWriteAgnInfoStorage(t *testing.T) {
 		t.Error(err)
 	}
 
-	auth, err := CreateAuth(privateKey1)
+	auth, err := CreateTxOpts(privateKey1, nil)
 	if err != nil {
 		t.Error(err)
 	}

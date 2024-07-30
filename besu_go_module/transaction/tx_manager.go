@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"go_module/config"
-	"log"
 	"math/big"
 	"strconv"
 
@@ -50,7 +49,7 @@ func init() {
 // fmt.Println(tx.Hash().Hex()) // 0xdae8ba5444eefdc99f4d45cd0c4f24056cba6a02cefbf78066ef9f4188ff7dc0
 func Deploy(pk string, abi *abi.ABI, bin string, params ...interface{}) (string, common.Hash) {
 
-	auth, _ := CreateAuth(pk)
+	auth, _ := CreateTxOpts(pk, nil)
 
 	// Important! params... 처럼 Input을 풀지 않으면, [[]]와 같이 이중 구조로 감싸여짐
 	address, tx, contract, err := bind.DeployContract(auth, *abi, common.FromHex(bin), client, params...)
@@ -99,7 +98,7 @@ func Call(blockNumber *big.Int, addr string, abi *abi.ABI, method string, params
 
 }
 
-func CreateAuth(pk string) (*bind.TransactOpts, error) {
+func CreateTxOpts(pk string, value *big.Int) (*bind.TransactOpts, error) {
 
 	privateKey, err := crypto.HexToECDSA(pk)
 	if err != nil {
@@ -130,31 +129,36 @@ func CreateAuth(pk string) (*bind.TransactOpts, error) {
 	}
 
 	auth.Nonce = big.NewInt(int64(nonce))
-	auth.Value = big.NewInt(0) // in wei
-	auth.GasLimit = gasLimit   // in unitss
+	auth.Value = value       // in wei
+	auth.GasLimit = gasLimit // in unitss
 	auth.GasPrice = gasPrice
 
 	return auth, nil
 }
 
-func craftSignSendTx(pk string, to *common.Address, value *big.Int, data []byte) common.Hash {
+func CreateTx(pk string, to *common.Address, value *big.Int, data []byte) (*types.Transaction, error) {
 
 	privateKey, err := crypto.HexToECDSA(pk)
 	if err != nil {
-		fmt.Println(err, "crypto.HexToECDSA 시 오류")
+		return nil, fmt.Errorf("crypto.HexToECDSA 시 오류 %w", err)
 	}
 
 	publicKey := privateKey.Public()
 	publicKeyECDSA, ok := publicKey.(*ecdsa.PublicKey)
 	if !ok {
-		log.Fatal("cannot assert type: publicKey is not of type *ecdsa.PublicKey")
+		return nil, fmt.Errorf("cannot assert type: publicKey is not of type *ecdsa.PublicKey")
 	}
 
 	from := crypto.PubkeyToAddress(*publicKeyECDSA)
-	nonce, _ := client.PendingNonceAt(context.Background(), from)
-	fmt.Println("Nonce : ", nonce)
+	nonce, err := client.PendingNonceAt(context.Background(), from)
+	if err != nil {
+		return nil, fmt.Errorf("crypto.PendingNonceAt 시 오류 %w", err)
+	}
 
-	gasPrice, _ := client.SuggestGasPrice(context.Background())
+	gasPrice, err := client.SuggestGasPrice(context.Background())
+	if err != nil {
+		return nil, fmt.Errorf("crypto.SuggestGasPrice 시 오류 %w", err)
+	}
 
 	tx := types.NewTx(&types.LegacyTx{
 		Nonce:    nonce,
@@ -164,6 +168,18 @@ func craftSignSendTx(pk string, to *common.Address, value *big.Int, data []byte)
 		Data:     data,
 		Gas:      gasLimit,
 	})
+
+	return tx, nil
+}
+
+func craftSignSendTx(pk string, to *common.Address, value *big.Int, data []byte) common.Hash {
+
+	privateKey, err := crypto.HexToECDSA(pk)
+	if err != nil {
+		return nil, fmt.Errorf("crypto.HexToECDSA 시 오류 %w", err)
+	}
+
+	tx, err := CreateTx(pk, to, value, data)
 
 	signedTx, err := signTx(tx, privateKey)
 	if err != nil {
