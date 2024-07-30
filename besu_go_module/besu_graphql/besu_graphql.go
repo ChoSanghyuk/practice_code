@@ -16,12 +16,14 @@ type Call struct {
 
 type BlockCallResp struct {
 	Block struct {
-		CallResp struct {
-			Data    string `json:"data"`
-			GasUsed string `json:"gasUsed"`
-			Status  string `json:"status"`
-		} `json:"call1"`
+		Call1 CallResp `json:"call1"`
 	} `json:"block"`
+}
+
+type CallResp struct {
+	Data    string `json:"data"`
+	GasUsed string `json:"gasUsed"`
+	Status  string `json:"status"`
 }
 
 var callQuery = `

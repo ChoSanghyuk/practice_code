@@ -45,29 +45,32 @@ func init() {
 	}
 }
 
-// fmt.Println(address.Hex())   // 0x147B8eb97fD247D06C4006D269c90C1908Fb5D54
-// fmt.Println(tx.Hash().Hex()) // 0xdae8ba5444eefdc99f4d45cd0c4f24056cba6a02cefbf78066ef9f4188ff7dc0
-func Deploy(pk string, abi *abi.ABI, bin string, params ...interface{}) (string, common.Hash) {
+func Deploy(pk string, abi *abi.ABI, bin string, params ...interface{}) (string, common.Hash, *bind.BoundContract, error) {
 
 	auth, _ := CreateTxOpts(pk, nil)
 
 	// Important! params... 처럼 Input을 풀지 않으면, [[]]와 같이 이중 구조로 감싸여짐
 	address, tx, contract, err := bind.DeployContract(auth, *abi, common.FromHex(bin), client, params...)
 	if err != nil {
-		fmt.Println(err, "Deploy 시 실패")
-		return "", common.Hash{}
+		return "", common.Hash{}, nil, fmt.Errorf("Deploy 시 실패. %w", err)
 	}
-	_ = contract
 
-	return address.Hex(), tx.Hash()
+	return address.Hex(), tx.Hash(), contract, nil
 
 }
 
-func Write(pk string, addr string, abi *abi.ABI, method string, params ...interface{}) common.Hash {
+func Write(pk string, addr string, abi *abi.ABI, method string, params ...interface{}) (common.Hash, error) {
 
 	address := common.HexToAddress(addr)
+
 	input, _ := abi.Pack(method, params...)
-	return craftSignSendTx(pk, &address, nil, input)
+
+	hash, err := craftSignSendTx(pk, &address, nil, input)
+	if err != nil {
+		return common.Hash{}, fmt.Errorf("서명 및 전송 시 실패. %w", err)
+	}
+
+	return hash, nil
 }
 
 func Call(blockNumber *big.Int, addr string, abi *abi.ABI, method string, params ...interface{}) ([]interface{}, error) { // blockNumber : can be nil
@@ -129,8 +132,8 @@ func CreateTxOpts(pk string, value *big.Int) (*bind.TransactOpts, error) {
 	}
 
 	auth.Nonce = big.NewInt(int64(nonce))
-	auth.Value = value       // in wei
-	auth.GasLimit = gasLimit // in unitss
+	auth.Value = value
+	auth.GasLimit = gasLimit
 	auth.GasPrice = gasPrice
 
 	return auth, nil
@@ -172,29 +175,32 @@ func CreateTx(pk string, to *common.Address, value *big.Int, data []byte) (*type
 	return tx, nil
 }
 
-func craftSignSendTx(pk string, to *common.Address, value *big.Int, data []byte) common.Hash {
+func craftSignSendTx(pk string, to *common.Address, value *big.Int, data []byte) (common.Hash, error) {
 
 	privateKey, err := crypto.HexToECDSA(pk)
 	if err != nil {
-		return nil, fmt.Errorf("crypto.HexToECDSA 시 오류 %w", err)
+		return common.Hash{}, fmt.Errorf("crypto.HexToECDSA 시 오류 %w", err)
 	}
 
 	tx, err := CreateTx(pk, to, value, data)
-
-	signedTx, err := signTx(tx, privateKey)
 	if err != nil {
-		fmt.Println(err, "Sign 실패")
+		return common.Hash{}, fmt.Errorf("CreateTx시 오류. %w", err)
+	}
+
+	signedTx, err := SignTx(tx, privateKey)
+	if err != nil {
+		return common.Hash{}, fmt.Errorf("sign 실패. %w", err)
 	}
 
 	err = client.SendTransaction(context.Background(), signedTx)
 	if err != nil {
-		fmt.Println(err, "Send 실패")
+		return common.Hash{}, fmt.Errorf("send 실패. %w", err)
 	}
 
-	return signedTx.Hash()
+	return signedTx.Hash(), nil
 }
 
-func signTx(tx *types.Transaction, privateKey *ecdsa.PrivateKey) (*types.Transaction, error) {
+func SignTx(tx *types.Transaction, privateKey *ecdsa.PrivateKey) (*types.Transaction, error) {
 
 	s := types.NewEIP155Signer(chainID)
 

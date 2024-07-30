@@ -21,7 +21,11 @@ func TestDeploy(t *testing.T) {
 
 	account := config.Config.Accounts["account1"]
 
-	addr, txHash := Deploy(account.PrivateKey[2:], contractAbi, contractBin)
+	addr, txHash, _, err := Deploy(account.PrivateKey[2:], contractAbi, contractBin)
+
+	if err != nil {
+		t.Error(err)
+	}
 	fmt.Println("생성된 컨트랙트 주소", addr)
 	fmt.Println("수행된 트랜잭션 해시", txHash)
 	/*
@@ -117,6 +121,9 @@ func TestWrite(t *testing.T) {
 
 	pk := config.Config.Accounts["account1"].PrivateKey[2:]
 
-	rtn := Write(pk, addr, contractAbi, "setAgeList", big.NewInt(1), big.NewInt(30))
+	rtn, err := Write(pk, addr, contractAbi, "setAgeList", big.NewInt(1), big.NewInt(30))
+	if err != nil {
+		t.Error(err)
+	}
 	fmt.Printf("%v", rtn.Hex())
 }
