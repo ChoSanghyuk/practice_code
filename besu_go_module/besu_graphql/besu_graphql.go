@@ -26,6 +26,10 @@ type CallResp struct {
 	Status  string `json:"status"`
 }
 
+type MutResp struct {
+	Hash string `json:"tx"`
+}
+
 var callQuery = `
 	query getCall($blockNumber: Long, $callData: CallData!) {
 		block(number: $blockNumber){
@@ -39,7 +43,7 @@ var callQuery = `
 `
 var mutQuery = `
 	mutation($mutData: Bytes!) {
-		t1: sendRawTransaction(data: $mutData)
+		tx: sendRawTransaction(data: $mutData)
 		}
 `
 
@@ -79,17 +83,17 @@ func BesuMutliCall(bn *big.Int, callDatas []Call) (BlockCallResp, error) {
 	return res, nil
 }
 
-func BesuWrite(tx string) (string, error) {
+func BesuWrite(tx string) (MutResp, error) {
 
 	req := graphql.NewRequest(mutQuery)
 
 	req.Var("mutData", tx)
 
-	var txHash string
+	var txHash MutResp
 
 	err := client.Run(context.Background(), req, &txHash)
 	if err != nil {
-		return "", fmt.Errorf("client run 에러 %w", err)
+		return MutResp{}, fmt.Errorf("client run 에러 %w", err)
 	}
 
 	return txHash, nil

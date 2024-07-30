@@ -139,7 +139,7 @@ func CreateTxOpts(pk string, value *big.Int) (*bind.TransactOpts, error) {
 	return auth, nil
 }
 
-func CreateTx(pk string, to *common.Address, value *big.Int, data []byte) (*types.Transaction, error) {
+func CreateSignedTx(pk string, to *common.Address, value *big.Int, data []byte) (*types.Transaction, error) {
 
 	privateKey, err := crypto.HexToECDSA(pk)
 	if err != nil {
@@ -172,24 +172,19 @@ func CreateTx(pk string, to *common.Address, value *big.Int, data []byte) (*type
 		Gas:      gasLimit,
 	})
 
-	return tx, nil
+	signedTx, err := SignTx(tx, privateKey)
+	if err != nil {
+		return nil, fmt.Errorf("sign 실패. %w", err)
+	}
+
+	return signedTx, nil
 }
 
 func craftSignSendTx(pk string, to *common.Address, value *big.Int, data []byte) (common.Hash, error) {
 
-	privateKey, err := crypto.HexToECDSA(pk)
-	if err != nil {
-		return common.Hash{}, fmt.Errorf("crypto.HexToECDSA 시 오류 %w", err)
-	}
-
-	tx, err := CreateTx(pk, to, value, data)
+	signedTx, err := CreateSignedTx(pk, to, value, data)
 	if err != nil {
 		return common.Hash{}, fmt.Errorf("CreateTx시 오류. %w", err)
-	}
-
-	signedTx, err := SignTx(tx, privateKey)
-	if err != nil {
-		return common.Hash{}, fmt.Errorf("sign 실패. %w", err)
 	}
 
 	err = client.SendTransaction(context.Background(), signedTx)

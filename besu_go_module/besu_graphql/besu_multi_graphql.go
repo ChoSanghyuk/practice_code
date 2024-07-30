@@ -9,19 +9,22 @@ import (
 	"github.com/machinebox/graphql"
 )
 
+type MultiCallsResp struct {
+	Block map[string]CallResp `json:"block"`
+}
+
 var multiCallQuery = `
 	query getCall($blockNumber: Long%s) {
 		block(number: $blockNumber){
 			%s
 		}
-	
-	fragment callFields on call {
+	}
+	fragment callFields on CallResult {
 		data, 
 		gasUsed, 
-		statu
+		status
 	}
 `
-
 var callForm = `
 	call%d : call(data: $callData%d){
 		...callFields
@@ -29,13 +32,15 @@ var callForm = `
 `
 var callVariableForm = "$callData%d: CallData!"
 
-type BlockCallsResp struct {
-	Block struct {
-		resps []CallResp
-	} `json:"block"`
-}
+var multiMutQuery = `
+	mutation(%s) {
+		%s
+	}
+`
+var mutForm = "tx%d: sendRawTransaction(data: $mutData%d) "
+var mutVariableForm = "$mutData%d: Bytes!"
 
-func BesuMultiCall(bn *big.Int, callDatas []Call) (BlockCallsResp, error) {
+func BesuMultiCall(bn *big.Int, callDatas []Call) (MultiCallsResp, error) {
 
 	var varBuilder strings.Builder
 	var callBuilder strings.Builder
@@ -50,8 +55,7 @@ func BesuMultiCall(bn *big.Int, callDatas []Call) (BlockCallsResp, error) {
 	}
 
 	query := fmt.Sprintf(multiCallQuery, varBuilder.String(), callBuilder.String())
-
-	fmt.Println(query)
+	// fmt.Println(query)
 
 	req := graphql.NewRequest(query)
 
@@ -61,11 +65,45 @@ func BesuMultiCall(bn *big.Int, callDatas []Call) (BlockCallsResp, error) {
 		req.Var(fmt.Sprintf("callData%d", i), call)
 	}
 
-	var res BlockCallsResp
+	var res MultiCallsResp
 
 	err := client.Run(context.Background(), req, &res)
 	if err != nil {
-		return BlockCallsResp{}, fmt.Errorf("client run 에러 %w", err)
+		return MultiCallsResp{}, fmt.Errorf("client run 에러 %w", err)
+	}
+
+	return res, nil
+}
+
+func BesuMultiWrite(txs []string) (map[string]string, error) {
+
+	var varBuilder strings.Builder
+	var callBuilder strings.Builder
+
+	for i := range len(txs) {
+		varBuilder.WriteString(fmt.Sprintf(mutVariableForm, i))
+		callBuilder.WriteString(fmt.Sprintf(mutForm, i, i))
+
+		if i < len(txs)-1 {
+			varBuilder.WriteString(", ")
+			callBuilder.WriteString(", ")
+		}
+	}
+
+	query := fmt.Sprintf(multiMutQuery, varBuilder.String(), callBuilder.String())
+
+	fmt.Println(query)
+	req := graphql.NewRequest(query)
+
+	for i, tx := range txs {
+		req.Var(fmt.Sprintf("mutData%d", i), tx)
+	}
+
+	var res map[string]string
+
+	err := client.Run(context.Background(), req, &res)
+	if err != nil {
+		return nil, fmt.Errorf("client run 에러 %w", err)
 	}
 
 	return res, nil
