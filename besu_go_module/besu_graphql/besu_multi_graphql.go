@@ -9,6 +9,8 @@ import (
 	"github.com/machinebox/graphql"
 )
 
+const besuLimit = 100
+
 type MultiCallsResp struct {
 	Block map[string]CallResp `json:"block"`
 }
@@ -42,10 +44,19 @@ var mutVariableForm = "$mutData%d: Bytes!"
 
 func BesuMultiCall(bn *big.Int, callDatas []Call) (MultiCallsResp, error) {
 
+	var res MultiCallsResp
+	var upto int = 0
+
+loop:
+	upto += besuLimit
+	if len(callDatas) < upto {
+		upto = len(callDatas)
+	}
+
 	var varBuilder strings.Builder
 	var callBuilder strings.Builder
 
-	for i := range len(callDatas) {
+	for i := upto - besuLimit; i < upto; i++ {
 
 		varBuilder.WriteString(", ")
 		varBuilder.WriteString(fmt.Sprintf(callVariableForm, i))
@@ -61,15 +72,17 @@ func BesuMultiCall(bn *big.Int, callDatas []Call) (MultiCallsResp, error) {
 
 	req.Var("blockNumber", bn)
 
-	for i, call := range callDatas {
-		req.Var(fmt.Sprintf("callData%d", i), call)
+	for i := upto - besuLimit; i < upto; i++ {
+		req.Var(fmt.Sprintf("callData%d", i), callDatas[i])
 	}
-
-	var res MultiCallsResp
 
 	err := client.Run(context.Background(), req, &res)
 	if err != nil {
 		return MultiCallsResp{}, fmt.Errorf("client run 에러 %w", err)
+	}
+
+	if upto < len(callDatas) {
+		goto loop
 	}
 
 	return res, nil
