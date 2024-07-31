@@ -68,7 +68,7 @@ func TestMultiCall(t *testing.T) {
 
 	s := time.Now().UnixMilli()
 	for i := 0; i < n; i++ {
-		rtn, err := callByMsgForTest(nil, msg)
+		rtn, err := CallByMsg(nil, msg)
 		if err != nil {
 			fmt.Println(err, "Call 실패")
 		}

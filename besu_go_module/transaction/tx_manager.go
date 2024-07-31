@@ -65,7 +65,12 @@ func Write(pk string, addr string, abi *abi.ABI, method string, params ...interf
 
 	input, _ := abi.Pack(method, params...)
 
-	hash, err := craftSignSendTx(pk, &address, nil, input)
+	signedTx, err := CreateSignedTx(pk, &address, nil, input)
+	if err != nil {
+		return common.Hash{}, fmt.Errorf("CreateTx시 오류. %w", err)
+	}
+
+	hash, err := SendTx(signedTx)
 	if err != nil {
 		return common.Hash{}, fmt.Errorf("서명 및 전송 시 실패. %w", err)
 	}
@@ -180,19 +185,30 @@ func CreateSignedTx(pk string, to *common.Address, value *big.Int, data []byte) 
 	return signedTx, nil
 }
 
-func craftSignSendTx(pk string, to *common.Address, value *big.Int, data []byte) (common.Hash, error) {
+// func craftSignSendTx(pk string, to *common.Address, value *big.Int, data []byte) (common.Hash, error) {
 
-	signedTx, err := CreateSignedTx(pk, to, value, data)
-	if err != nil {
-		return common.Hash{}, fmt.Errorf("CreateTx시 오류. %w", err)
-	}
+// 	signedTx, err := CreateSignedTx(pk, to, value, data)
+// 	if err != nil {
+// 		return common.Hash{}, fmt.Errorf("CreateTx시 오류. %w", err)
+// 	}
 
-	err = client.SendTransaction(context.Background(), signedTx)
+// 	err = client.SendTransaction(context.Background(), signedTx)
+// 	if err != nil {
+// 		return common.Hash{}, fmt.Errorf("send 실패. %w", err)
+// 	}
+
+// 	return signedTx.Hash(), nil
+// }
+
+func SendTx(signedTx *types.Transaction) (common.Hash, error) {
+
+	err := client.SendTransaction(context.Background(), signedTx)
 	if err != nil {
 		return common.Hash{}, fmt.Errorf("send 실패. %w", err)
 	}
 
 	return signedTx.Hash(), nil
+
 }
 
 func SignTx(tx *types.Transaction, privateKey *ecdsa.PrivateKey) (*types.Transaction, error) {
@@ -208,7 +224,7 @@ func SignTx(tx *types.Transaction, privateKey *ecdsa.PrivateKey) (*types.Transac
 }
 
 // 성능 테스트를 위해, msg 완성 후 Call하는 로직
-func callByMsgForTest(blockNumber *big.Int, msg ethereum.CallMsg) ([]byte, error) { // blockNumber : can be nil
+func CallByMsg(blockNumber *big.Int, msg ethereum.CallMsg) ([]byte, error) { // blockNumber : can be nil
 	return client.CallContract(context.Background(), msg, blockNumber) // CallContract(ctx context.Context, call ethereum.CallMsg, blockNumber *big.Int) ([]byte, error)
 }
 
