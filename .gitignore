@@ -1,2 +1,5 @@
-# besu data
-besu_go_module/config/besu/Node-*/data/
+besu_go_module/config/besu/Node-1/data/
+
+
+# test
+testConfig/README.md
