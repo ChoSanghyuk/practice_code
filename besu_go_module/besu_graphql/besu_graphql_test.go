@@ -2,6 +2,7 @@ package besu_graphql
 
 import (
 	"encoding/hex"
+	"fmt"
 	"go_module/config"
 	"go_module/transaction"
 	"math/big"
@@ -72,30 +73,27 @@ func TestBesuWrite(t *testing.T) {
 
 func TestMultiBesuCall(t *testing.T) {
 
+	n := 200
+
 	abi, err := transaction.AgeInfoStrageMetaData.GetAbi()
 	if err != nil {
 		t.Error(err)
 	}
 
-	data1, err := abi.Pack("getAge", "Jo")
-	if err != nil {
-		t.Error(err)
-	}
-	data2, err := abi.Pack("getAge", "min")
-	if err != nil {
-		t.Error(err)
+	callDatas := make([]Call, n)
+
+	for i := range n {
+		data, err := abi.Pack("getAge", fmt.Sprintf("name%d", i))
+		if err != nil {
+			t.Error(err)
+		}
+		callDatas[i] = Call{
+			To:   cntr_addr,
+			Data: "0x" + hex.EncodeToString(data),
+		}
 	}
 
-	rtn, err := BesuMultiCall(nil, []Call{
-		{
-			To:   cntr_addr,
-			Data: "0x" + hex.EncodeToString(data1),
-		},
-		{
-			To:   cntr_addr,
-			Data: "0x" + hex.EncodeToString(data2),
-		},
-	})
+	rtn, err := BesuMultiCall(nil, callDatas)
 	if err != nil {
 		t.Error(err)
 	}
