@@ -1,4 +1,4 @@
-package besu_graphql
+package graphql
 
 import (
 	"context"

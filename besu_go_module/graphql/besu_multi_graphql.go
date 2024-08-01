@@ -1,15 +1,16 @@
-package besu_graphql
+package graphql
 
 import (
 	"context"
 	"fmt"
 	"math/big"
 	"strings"
+	"time"
 
 	"github.com/machinebox/graphql"
 )
 
-const besuLimit = 100
+const BesuLimit = 190
 
 type MultiCallsResp struct {
 	Block map[string]CallResp `json:"block"`
@@ -23,7 +24,6 @@ var multiCallQuery = `
 	}
 	fragment callFields on CallResult {
 		data, 
-		gasUsed, 
 		status
 	}
 `
@@ -45,18 +45,14 @@ var mutVariableForm = "$mutData%d: Bytes!"
 func BesuMultiCall(bn *big.Int, callDatas []Call) (MultiCallsResp, error) {
 
 	var res MultiCallsResp
-	var upto int = 0
+	var s int = 0
+	var e int = min(len(callDatas), BesuLimit)
 
 loop:
-	upto += besuLimit
-	if len(callDatas) < upto {
-		upto = len(callDatas)
-	}
-
 	var varBuilder strings.Builder
 	var callBuilder strings.Builder
 
-	for i := upto - besuLimit; i < upto; i++ {
+	for i := s; i < e; i++ {
 
 		varBuilder.WriteString(", ")
 		varBuilder.WriteString(fmt.Sprintf(callVariableForm, i))
@@ -72,7 +68,7 @@ loop:
 
 	req.Var("blockNumber", bn)
 
-	for i := upto - besuLimit; i < upto; i++ {
+	for i := s; i < e; i++ {
 		req.Var(fmt.Sprintf("callData%d", i), callDatas[i])
 	}
 
@@ -81,7 +77,9 @@ loop:
 		return MultiCallsResp{}, fmt.Errorf("client run 에러 %w", err)
 	}
 
-	if upto < len(callDatas) {
+	if e < len(callDatas) {
+		s += BesuLimit
+		e = min(len(callDatas), e+BesuLimit)
 		goto loop
 	}
 
@@ -90,33 +88,41 @@ loop:
 
 func BesuMultiWrite(txs []string) (map[string]string, error) {
 
+	var res map[string]string
+	var s int = 0
+	var e int = min(len(txs), BesuLimit)
+
+loop:
 	var varBuilder strings.Builder
 	var callBuilder strings.Builder
 
-	for i := range len(txs) {
+	for i := s; i < e; i++ {
 		varBuilder.WriteString(fmt.Sprintf(mutVariableForm, i))
 		callBuilder.WriteString(fmt.Sprintf(mutForm, i, i))
 
-		if i < len(txs)-1 {
+		if i < e-1 {
 			varBuilder.WriteString(", ")
 			callBuilder.WriteString(", ")
 		}
 	}
 
 	query := fmt.Sprintf(multiMutQuery, varBuilder.String(), callBuilder.String())
-
-	fmt.Println(query)
 	req := graphql.NewRequest(query)
 
-	for i, tx := range txs {
-		req.Var(fmt.Sprintf("mutData%d", i), tx)
+	for i := s; i < e; i++ {
+		req.Var(fmt.Sprintf("mutData%d", i), txs[i])
 	}
-
-	var res map[string]string
 
 	err := client.Run(context.Background(), req, &res)
 	if err != nil {
 		return nil, fmt.Errorf("client run 에러 %w", err)
+	}
+
+	if e < len(txs) {
+		s += BesuLimit
+		e = min(len(txs), e+BesuLimit)
+		time.Sleep(3 * time.Second)
+		goto loop
 	}
 
 	return res, nil
