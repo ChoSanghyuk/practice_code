@@ -253,3 +253,7 @@ func callByMsgWithGoRoutineForTest(c chan []byte, blockNumber *big.Int, msg ethe
 	c <- rtn
 
 }
+
+func TransactionReceipt(ctx context.Context, txHash common.Hash) (*types.Receipt, error) {
+	return client.TransactionReceipt(ctx, txHash)
+}

@@ -30,7 +30,7 @@ func TestDeployAgeInfoStorage(t *testing.T) {
 }
 
 func TestWriteAgnInfoStorage(t *testing.T) {
-	contract, err := NewAgeInfoStrage(common.HexToAddress("0x42699A7612A82f1d9C36148af9C77354759b210b"), client)
+	contract, err := NewAgeInfoStrage(common.HexToAddress("0x38DB5cc1954Cf38fe65849C9de7D38a2Eac4d79c"), client)
 	if err != nil {
 		t.Error(err)
 	}
@@ -48,7 +48,7 @@ func TestWriteAgnInfoStorage(t *testing.T) {
 }
 
 func TestCallAgnInfoStorage(t *testing.T) {
-	contract, err := NewAgeInfoStrage(common.HexToAddress("0x42699A7612A82f1d9C36148af9C77354759b210b"), client)
+	contract, err := NewAgeInfoStrage(common.HexToAddress("0x38DB5cc1954Cf38fe65849C9de7D38a2Eac4d79c"), client)
 	if err != nil {
 		t.Error(err)
 	}

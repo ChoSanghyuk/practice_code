@@ -10,7 +10,7 @@ import (
 	"github.com/machinebox/graphql"
 )
 
-const BesuLimit = 190
+const BesuCallLimit = 190
 
 type MultiCallsResp struct {
 	Block map[string]CallResp `json:"block"`
@@ -46,7 +46,7 @@ func BesuMultiCall(bn *big.Int, callDatas []Call) (MultiCallsResp, error) {
 
 	var res MultiCallsResp
 	var s int = 0
-	var e int = min(len(callDatas), BesuLimit)
+	var e int = min(len(callDatas), BesuCallLimit)
 
 loop:
 	var varBuilder strings.Builder
@@ -78,8 +78,8 @@ loop:
 	}
 
 	if e < len(callDatas) {
-		s += BesuLimit
-		e = min(len(callDatas), e+BesuLimit)
+		s += BesuCallLimit
+		e = min(len(callDatas), e+BesuCallLimit)
 		goto loop
 	}
 
@@ -90,7 +90,7 @@ func BesuMultiWrite(txs []string) (map[string]string, error) {
 
 	var res map[string]string
 	var s int = 0
-	var e int = min(len(txs), BesuLimit)
+	var e int = min(len(txs), BesuCallLimit)
 
 loop:
 	var varBuilder strings.Builder
@@ -119,9 +119,9 @@ loop:
 	}
 
 	if e < len(txs) {
-		s += BesuLimit
-		e = min(len(txs), e+BesuLimit)
-		time.Sleep(3 * time.Second)
+		s += BesuCallLimit
+		e = min(len(txs), e+BesuCallLimit)
+		time.Sleep(4 * time.Second)
 		goto loop
 	}
 
