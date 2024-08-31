@@ -62,7 +62,6 @@ loop:
 	}
 
 	query := fmt.Sprintf(multiCallQuery, varBuilder.String(), callBuilder.String())
-	// fmt.Println(query)
 
 	req := graphql.NewRequest(query)
 
