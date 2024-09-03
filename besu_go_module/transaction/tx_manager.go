@@ -234,3 +234,7 @@ func callByMsgWithGoRoutineForTest(c chan []byte, blockNumber *big.Int, msg ethe
 	c <- rtn
 
 }
+
+func LinkLibaryT() {
+
+}
