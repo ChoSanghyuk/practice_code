@@ -24,20 +24,19 @@ var gasLimit uint64
 var client *ethclient.Client
 
 func init() {
-	// t : temp
-	t1, err := strconv.ParseInt(config.Config.Network.ChainId, 10, 64)
+	ci, err := strconv.ParseInt(config.Config.Network.ChainId, 10, 64)
 	if err != nil {
 		fmt.Println(err, "chain Id Int 변환 시 오류")
 	}
-	chainID = big.NewInt(t1)
+	chainID = big.NewInt(ci)
 
 	url = config.Config.Network.Url
 
-	t2, err := strconv.ParseUint(config.Config.Network.GasLimit[2:], 16, 64)
+	gl, err := strconv.ParseUint(config.Config.Network.GasLimit[2:], 16, 64)
 	if err != nil {
 		fmt.Println(err, "gasLimit Uint 변환 시 오류")
 	}
-	gasLimit = t2
+	gasLimit = gl
 
 	client, err = ethclient.Dial(url)
 	if err != nil {
@@ -184,21 +183,41 @@ func CreateSignedTx(pk string, to *common.Address, value *big.Int, data []byte) 
 
 	return signedTx, nil
 }
+func CreateSignedTx2(pk string, to *common.Address, value *big.Int, data []byte, gas uint64, i uint64) (*types.Transaction, error) {
 
-// func craftSignSendTx(pk string, to *common.Address, value *big.Int, data []byte) (common.Hash, error) {
+	privateKey, err := crypto.HexToECDSA(pk)
+	if err != nil {
+		return nil, fmt.Errorf("crypto.HexToECDSA 시 오류 %w", err)
+	}
 
-// 	signedTx, err := CreateSignedTx(pk, to, value, data)
-// 	if err != nil {
-// 		return common.Hash{}, fmt.Errorf("CreateTx시 오류. %w", err)
-// 	}
+	publicKey := privateKey.Public()
+	publicKeyECDSA, ok := publicKey.(*ecdsa.PublicKey)
+	if !ok {
+		return nil, fmt.Errorf("cannot assert type: publicKey is not of type *ecdsa.PublicKey")
+	}
 
-// 	err = client.SendTransaction(context.Background(), signedTx)
-// 	if err != nil {
-// 		return common.Hash{}, fmt.Errorf("send 실패. %w", err)
-// 	}
+	from := crypto.PubkeyToAddress(*publicKeyECDSA)
+	nonce, err := client.PendingNonceAt(context.Background(), from)
+	if err != nil {
+		return nil, fmt.Errorf("crypto.PendingNonceAt 시 오류 %w", err)
+	}
 
-// 	return signedTx.Hash(), nil
-// }
+	tx := types.NewTx(&types.LegacyTx{
+		Nonce:    nonce + i,
+		GasPrice: big.NewInt(1),
+		To:       to,
+		Value:    value,
+		Data:     data,
+		Gas:      gas,
+	})
+
+	signedTx, err := SignTx(tx, privateKey)
+	if err != nil {
+		return nil, fmt.Errorf("sign 실패. %w", err)
+	}
+
+	return signedTx, nil
+}
 
 func SendTx(signedTx *types.Transaction) (common.Hash, error) {
 
@@ -235,6 +254,6 @@ func callByMsgWithGoRoutineForTest(c chan []byte, blockNumber *big.Int, msg ethe
 
 }
 
-func LinkLibaryT() {
-
+func TransactionReceipt(ctx context.Context, txHash common.Hash) (*types.Receipt, error) {
+	return client.TransactionReceipt(ctx, txHash)
 }

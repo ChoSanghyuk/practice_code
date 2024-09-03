@@ -30,7 +30,7 @@ func ValidateHandler(c *fiber.Ctx) error {
 		return err
 	}
 
-	if err := ValidCheck(c, user); err != nil {
+	if err := validCheck(user); err != nil {
 		log.Error(err)
 		return err
 	}
