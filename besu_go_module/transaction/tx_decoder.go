@@ -56,7 +56,7 @@ var receipt 신규struct
 err := client.Client().CallContext(ctx, &receipt, "", txHash)
 ```
 */
-func ParseReceipt(receipt *types.Receipt) (string, error) {
+func ParseReceipt(abiEvent abi.Event, receipt *types.Receipt) (string, error) {
 
 	events := make([]*eventInfo, len(receipt.Logs))
 	for i, log := range receipt.Logs {
@@ -67,7 +67,7 @@ func ParseReceipt(receipt *types.Receipt) (string, error) {
 		eventInfo.Address = log.Address
 		eventInfo.Index = log.Index
 
-		var abiEvent abi.Event // todo. topic과 대응되는 event 조회 필요
+		// var abiEvent abi.Event // todo. topic과 대응되는 event 조회 필요
 		eventInfo.EventName = abiEvent.Name
 
 		paramMap := make(map[string]interface{})

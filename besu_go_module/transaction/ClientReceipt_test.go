@@ -28,6 +28,7 @@ func init() {
 			log.Panic(err)
 		}
 	} else {
+		addr := common.HexToAddress(hashAddr)
 		clientReceiptContract, err = NewClientReceipt(addr, client)
 		if err != nil {
 			log.Panic(err)
