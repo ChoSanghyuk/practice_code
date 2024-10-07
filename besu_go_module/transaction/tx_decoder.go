@@ -67,7 +67,7 @@ func ParseReceipt(abiEvent abi.Event, receipt *types.Receipt) (string, error) {
 		eventInfo.Address = log.Address
 		eventInfo.Index = log.Index
 
-		// var abiEvent abi.Event // todo. topic과 대응되는 event 조회 필요
+		// var abiEvent abi.Event // todo. topic과 대응되는 event 조회 필요. (log.Topics[0]이 Event ID의 Hex값)
 		eventInfo.EventName = abiEvent.Name
 
 		paramMap := make(map[string]interface{})
