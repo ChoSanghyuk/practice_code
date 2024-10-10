@@ -1,13 +1,15 @@
 package transaction
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
-	"math/big"
 
+	ethereum "github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/ethereum/go-ethereum/ethclient"
 )
 
 func ParseTxData(tx *types.Transaction, abi *abi.ABI) (string, error) {
@@ -75,7 +77,7 @@ func ParseReceipt(abiEvent abi.Event, receipt *types.Receipt) (string, error) {
 
 		err := abiEvent.Inputs.UnpackIntoMap(paramMap, log.Data)
 		if err != nil {
-			// todo. error handle
+			return "", nil
 		}
 
 		indexed := make([]abi.Argument, len(log.Topics)-1)
@@ -89,7 +91,7 @@ func ParseReceipt(abiEvent abi.Event, receipt *types.Receipt) (string, error) {
 
 		err = abi.ParseTopicsIntoMap(paramMap, indexed, log.Topics[1:])
 		if err != nil {
-			// todo. error handle
+			return "", nil
 		}
 
 		for i, input := range indexed {
@@ -102,7 +104,7 @@ func ParseReceipt(abiEvent abi.Event, receipt *types.Receipt) (string, error) {
 
 	jsonData, err := json.Marshal(events)
 	if err != nil {
-		// todo. error handle
+		return "", nil
 	}
 
 	var _ types.Receipt
@@ -111,21 +113,35 @@ func ParseReceipt(abiEvent abi.Event, receipt *types.Receipt) (string, error) {
 
 }
 
-// revertReason 받을 수 있는 새 receipt. 필드를 string으로 받아야 하는지 테스트 필요
+/*
+revertReason 받을 수 있는 새 receipt.
+대부분의 필드들은 우선 string으로 받아야 하며, 이후 형변환 필요
+*/
 type CustomReceipt struct {
-	BlockHash         common.Hash    `json:"blockHash"`
-	BlockNumber       *big.Int       `json:"blockNumber"`
-	ContractAddress   common.Address `json:"contractAddress"`
-	CumulativeGasUsed uint64         `json:"cumulativeGasUsed"`
-	EffectiveGasPrice *big.Int       `json:"effectiveGasPrice"`
-	From              string         `json:"from"`
-	GasUsed           uint64         `json:"gasUsed"`
-	Logs              []*types.Log   `json:"logs"`
-	Bloom             types.Bloom    `json:"logsBloom"`
-	RevertReason      string         `json:"revertReason"`
-	Status            uint64         `json:"status"`
-	To                string         `json:"to"`
-	TxHash            common.Hash    `json:"transactionHash"`
-	TransactionIndex  uint           `json:"transactionIndex"`
-	Type              string         `json:"type"`
+	BlockHash         string       `json:"blockHash"`         // common.Hash
+	BlockNumber       string       `json:"blockNumber"`       // *big.Int
+	ContractAddress   string       `json:"contractAddress"`   // common.Address
+	CumulativeGasUsed string       `json:"cumulativeGasUsed"` // uint64
+	EffectiveGasPrice string       `json:"effectiveGasPrice"` // *big.Int
+	From              string       `json:"from"`              // string
+	GasUsed           string       `json:"gasUsed"`           // uint64
+	Logs              []*types.Log `json:"logs"`              // []*types.Log
+	Bloom             string       `json:"logsBloom"`         // types.Bloom
+	RevertReason      string       `json:"revertReason"`      // string
+	Status            string       `json:"status"`            // uint64
+	To                string       `json:"to"`                // string
+	TxHash            string       `json:"transactionHash"`   // common.Hash
+	TransactionIndex  string       `json:"transactionIndex"`  // uint
+	Type              string       `json:"type"`              // string
+}
+
+func TransactionCustomReceipt(client *ethclient.Client, ctx context.Context, txHash common.Hash) (*CustomReceipt, error) {
+	var r *CustomReceipt
+	err := client.Client().CallContext(ctx, &r, "eth_getTransactionReceipt", txHash)
+	if err == nil && r == nil {
+		return nil, ethereum.NotFound
+	}
+
+	return r, err
+
 }

@@ -52,3 +52,13 @@ func TestParseReceipt(t *testing.T) {
 
 	fmt.Println(parsed)
 }
+
+func TestCustomReceipt(t *testing.T) {
+	hash := common.HexToHash("0xf3e86a122a9a51e90c5bcf5fc5d85ccdb3274b981eb1b938db28365b851ce89f")
+
+	receipt, err := TransactionCustomReceipt(client, context.Background(), hash)
+	if err != nil {
+		t.Error(err)
+	}
+	fmt.Printf("%+v", receipt)
+}
