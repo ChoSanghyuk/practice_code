@@ -7,10 +7,6 @@ import (
 
 func TestSol(t *testing.T) {
 
-	r := solution(
-		[]string{"john", "mary", "edward", "sam", "emily", "jaimie", "tod", "young"},
-		[]string{"-", "-", "mary", "edward", "mary", "mary", "jaimie", "edward"},
-		[]string{"young", "john", "tod", "emily", "mary"},
-		[]int{12, 4, 2, 5, 10})
+	r := solution([]int64{2, 7})
 	fmt.Println(r)
 }
