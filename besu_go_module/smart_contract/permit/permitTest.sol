@@ -3,9 +3,9 @@ pragma solidity >=0.8.1 <0.9.0;
 
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {IERC20Permit} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Permit.sol";
-import {EIP712} from "@openzeppelin/contracts/utils/cryptography/EIP712.sol"
-import {Nonces} from "@openzeppelin/contracts/utils/Nonces.sol"
-import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol"
+import {EIP712} from "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
+import {Nonces} from "@openzeppelin/contracts/utils/Nonces.sol";
+import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 
 contract permitTest is ERC20. IERC20Permit, EIP712, Nonces {
 bytes32 private constant PERMIT_TYPEHASH =
@@ -58,7 +58,7 @@ bytes32 private constant PERMIT_TYPEHASH =
         }
 
         // _approve(owner, spender, value);
-        emit PermitSuccess("DUMMY PERMIT SUCCESS")
+        emit PermitSuccess("DUMMY PERMIT SUCCESS");
     }
 
     /**

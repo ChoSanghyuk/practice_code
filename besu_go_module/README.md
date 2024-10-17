@@ -87,6 +87,9 @@ services:
 
 docker run -v ./:/compile/ ethereum/solc:0.8.6 -o /compile/output --abi --bin ./compile/AgeInfoStorage.sol
 
+docker run -v ./:/compile/ ethereum/solc:0.8.20 -o /compile/upgradeable/proxy/output --abi --bin @openzeppelin=/compile/node_modules/@openzeppelin/ ./compile/upgradeable/proxy/MyProxy.sol
+- library를 import해서 사용하는 경우, 별도로 패키지의 경로 지정이 필요함
+
 docker pull ethereum/client-go
 공식 ethereum/client-go 이미지에 abigen 설치되어 있지 않음. 별도 설정 필요
 ```
@@ -117,3 +120,19 @@ curl -X POST -H "Content-Type: application/json" --data '{ "query": "{__schema {
 port binding 없이는 로컬 호스트에서 http 요청으로 접근할 순 없음!
 For a port to be accessible to containers or non-docker hosts on different networks, that port must be published using the -p or --publish flag
 docs.docker.com/network/drivers/bridge
+
+
+## package managing
+
+### yarn
+- 설치
+```
+brew install node
+brew install yarn
+```
+- 사용
+```
+yarn init
+yarn add @openzeppelin/contracts
+```
+
