@@ -142,6 +142,7 @@ TODO.
   - => mirae에서 사용한 milestone 확인. + solidity version 
 - genesis block의 Pos 적용된 버전에서의 validator 동작 및 초기 alloc 설정 (전반적인 genesis file 작성법)
 - genesis file에서 milestone 지정하면, 초기 besu 노드 올라갈 때 표시됨  (근데 parisBlock 할때는 frontier로 회귀해버림. 별도 작성법 있는지 확인 필요)
+- hardhat ts test 코드 템플릿
 ```
 2024-10-21 05:36:39.199+00:00 | main | INFO  | ProtocolScheduleBuilder | Protocol schedule created with milestones: [Berlin:0]
 ```
