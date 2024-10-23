@@ -1,41 +1,27 @@
 package main
 
-import "strconv"
+func solution(n int, left int64, right int64) []int {
 
-/*
-양의 정수 x에 대한 함수 f(x)를 다음과 같이 정의합니다.
+	rtn := make([]int, right-left+1)
+	n2 := int64(n)
 
-x보다 크고 x와 비트가 1~2개 다른 수들 중에서 제일 작은 수
-*/
-
-func solution(numbers []int64) []int64 {
-
-	rtn := make([]int64, len(numbers))
-
-	for i, n := range numbers {
-		rtn[i] = f(n)
+	for i := range rtn {
+		rtn[i] = getNum(n2, left)
 	}
-
 	return rtn
 }
 
-func f(n int64) int64 {
+func getNum(n int64, t int64) int {
 
-	if n%2 == 0 {
-		return n + 1
-	} else {
-		s := strconv.FormatInt(n, 2)
-		b := []byte(s)
-		b = append([]byte{'0'}, b...)
+	r := t / n
+	c := t % n
 
-		for i := len(b) - 1; i >= 0; i-- {
-			if b[i] == '0' {
-				b[i] = '1' // 홀수일때는 끝자리가 0으로 시작하지 않음
-				b[i+1] = '0'
-				rtn, _ := strconv.ParseInt(string(b), 2, 64)
-				return rtn
-			}
-		}
+	return max(int(r), int(c)) + 1
+}
+
+func max(a, b int) int {
+	if a < b {
+		return b
 	}
-	return -1
+	return a
 }

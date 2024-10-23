@@ -139,13 +139,29 @@ yarn add @openzeppelin/contracts
 
 TODO.
 - solidity 0.8.20으로 컴파일한 컨트랙트 berlin milestone에서 배포 실패
-  - => mirae에서 사용한 milestone 확인. + solidity version 
+  - => mirae에서 사용한 milestone 확인. + solidity version
+  
+  - 흐음.... 합의 알고리즘 차이인가
+  
+    ```json
+    "berlinBlock" : 0,
+    "qbft" : {
+        "blockperiodseconds" : 3,
+        "epochlength" : 30000,
+        "requesttimeoutseconds" : 6
+    }
+    ```
+  
 - genesis block의 Pos 적용된 버전에서의 validator 동작 및 초기 alloc 설정 (전반적인 genesis file 작성법)
+
 - genesis file에서 milestone 지정하면, 초기 besu 노드 올라갈 때 표시됨  (근데 parisBlock 할때는 frontier로 회귀해버림. 별도 작성법 있는지 확인 필요)
+
 - hardhat ts test 코드 템플릿
 ```
 2024-10-21 05:36:39.199+00:00 | main | INFO  | ProtocolScheduleBuilder | Protocol schedule created with milestones: [Berlin:0]
 ```
+
+
 
 Frontier : 0.1.x - 0.2.x
 Homestead : 0.2.x - 0.4.0
