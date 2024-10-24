@@ -87,6 +87,9 @@ services:
 
 docker run -v ./:/compile/ ethereum/solc:0.8.6 -o /compile/output --abi --bin ./compile/AgeInfoStorage.sol
 
+docker run -v ./:/compile/ ethereum/solc:0.8.20 -o /compile/upgradeable/proxy/output --abi --bin @openzeppelin=/compile/node_modules/@openzeppelin/ ./compile/upgradeable/proxy/MyProxy.sol
+- library를 import해서 사용하는 경우, 별도로 패키지의 경로 지정이 필요함
+
 docker pull ethereum/client-go
 공식 ethereum/client-go 이미지에 abigen 설치되어 있지 않음. 별도 설정 필요
 ```
@@ -117,3 +120,56 @@ curl -X POST -H "Content-Type: application/json" --data '{ "query": "{__schema {
 port binding 없이는 로컬 호스트에서 http 요청으로 접근할 순 없음!
 For a port to be accessible to containers or non-docker hosts on different networks, that port must be published using the -p or --publish flag
 docs.docker.com/network/drivers/bridge
+
+
+## package managing
+
+### yarn
+- 설치
+```
+brew install node
+brew install yarn
+```
+- 사용
+```
+yarn init
+yarn add @openzeppelin/contracts
+```
+
+
+TODO.
+- solidity 0.8.20으로 컴파일한 컨트랙트 berlin milestone에서 배포 실패
+  - => mirae에서 사용한 milestone 확인. + solidity version
+  
+  - 흐음.... 합의 알고리즘 차이인가
+  
+    ```json
+    "berlinBlock" : 0,
+    "qbft" : {
+        "blockperiodseconds" : 3,
+        "epochlength" : 30000,
+        "requesttimeoutseconds" : 6
+    }
+    ```
+  
+- genesis block의 Pos 적용된 버전에서의 validator 동작 및 초기 alloc 설정 (전반적인 genesis file 작성법)
+
+- genesis file에서 milestone 지정하면, 초기 besu 노드 올라갈 때 표시됨  (근데 parisBlock 할때는 frontier로 회귀해버림. 별도 작성법 있는지 확인 필요)
+
+- hardhat ts test 코드 템플릿
+```
+2024-10-21 05:36:39.199+00:00 | main | INFO  | ProtocolScheduleBuilder | Protocol schedule created with milestones: [Berlin:0]
+```
+
+
+
+Frontier : 0.1.x - 0.2.x
+Homestead : 0.2.x - 0.4.0
+Byzantium : 0.4.21 - 0.5.x
+Constantinople and Petersburg : 0.5.x
+Istanbul : 0.5.x - 0.6.x
+Berlin : 0.6.x - 0.8.4
+London : 0.8.5 - 0.8.9
+Paris : 0.8.15 - 0.8.20
+Shanghai : 0.8.19+
+Cancun : 0.8.21+

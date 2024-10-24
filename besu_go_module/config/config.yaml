@@ -2,7 +2,7 @@
 network:
   chainId: "1337"
   url: "http://localhost:8545"
-  gasLimit: "0xa00000"
+  gasLimit: "0xa0000000000"
   graphql: "http://localhost:8547"
 
 node:
@@ -35,4 +35,3 @@ account:
   account3:  
     address: "0xf17f52151EbEF6C7334FAD080c5704D77216b732"
     privateKey: "0xae6ae8e5ccbfb04590405997ee2d52d2b330726137b875053c36d94e974d162f"
-  

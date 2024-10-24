@@ -10,7 +10,7 @@ import (
 
 var clientReceiptContract *ClientReceipt
 
-func init() {
+func TestReceiptInit(t *testing.T) {
 
 	hashAddr := "0xE0323ECd69dD90DF1628Ce855D4f6299B54a5F5F"
 	var addr common.Address
@@ -28,6 +28,7 @@ func init() {
 			log.Panic(err)
 		}
 	} else {
+		addr := common.HexToAddress(hashAddr)
 		clientReceiptContract, err = NewClientReceipt(addr, client)
 		if err != nil {
 			log.Panic(err)

@@ -497,3 +497,11 @@ func TestCompareRpcGraphqlReceiptCallInMultiThread(t *testing.T) {
 	t.Logf("graphql receipt 조회 %d개 소요시간 %dms\n", n, e-s)
 
 }
+
+func TestPrintf(t *testing.T) {
+	f := "function dumpFunction%d(string memory name) external { _dumpList.push(name); }\n"
+
+	for i := range 300 {
+		fmt.Printf(f, i)
+	}
+}

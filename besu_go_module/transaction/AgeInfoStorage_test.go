@@ -21,11 +21,12 @@ func TestDeployAgeInfoStorage(t *testing.T) {
 		t.Error(err)
 	}
 
-	addr, _, _, err := DeployAgeInfoStrage(auth, client)
+	addr, tx, _, err := DeployAgeInfoStrage(auth, client)
 	if err != nil {
 		t.Error(err)
 	}
 
+	t.Logf("트랜잭션 해시 : %s", tx.Hash())
 	t.Logf("컨트랙트 주소 : %s", addr)
 }
 

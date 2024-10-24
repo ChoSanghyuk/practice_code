@@ -23,5 +23,5 @@ host-allowlist = ["*"] # Allowed hosts for HTTP access
 graphql-http-enabled=true
 graphql-http-port=18547
 
-bootnodes = ["enode://4a3992c316d9ceefac5d3884ca10213059e561d09cdb2849f0357127a0738d8f03cab45170b3ae2eccc751f8afc4fa340d78d01d6ceae76201a86b6d6a62b953@172.18.0.2:30303"]
+bootnodes = ["enode://7009b59ba2e485b776de7fd4279fec3d8ca64383f4b4e7fe1d99fccc063ed1444590d205cb07c9ff0f1750f6628dd368e5cff08c1543f7efbf7bc7c3cc329712@172.18.0.2:30303"]
 
