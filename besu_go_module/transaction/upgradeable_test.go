@@ -37,35 +37,35 @@ func TestInitialSetting(t *testing.T) {
 
 	fmt.Println(tx1.Hash())
 
-	implAbi, err := MyImplementV1MetaData.GetAbi()
-	if err != nil {
-		t.Error(err)
-	}
+	// implAbi, err := MyImplementV1MetaData.GetAbi()
+	// if err != nil {
+	// 	t.Error(err)
+	// }
 
-	input, err := implAbi.Pack("initialize")
-	if err != nil {
-		t.Error(err)
-	}
+	// input, err := implAbi.Pack("initialize")
+	// if err != nil {
+	// 	t.Error(err)
+	// }
 
-	// t.Log(parsed)
-	// 2. 프록시 컨트랙트 배포 (프록시-구현 연결)
-	auth2, _ := CreateTxOpts(privateKey1, nil)
-	proxyAddr, _, _, err := DeployMyProxy(auth2, client, implAddr, input)
-	if err != nil {
-		t.Error(err)
-	}
+	// // t.Log(parsed)
+	// // 2. 프록시 컨트랙트 배포 (프록시-구현 연결)
+	// auth2, _ := CreateTxOpts(privateKey1, nil)
+	// proxyAddr, _, _, err := DeployMyProxy(auth2, client, implAddr, input)
+	// if err != nil {
+	// 	t.Error(err)
+	// }
 
-	t.Logf("\n프록시 주소 : %s\n구현 컨트랙트 주소 : %s", proxyAddr, implAddr)
+	t.Logf("\n프록시 주소 : %s\n구현 컨트랙트 주소 : %s", "dfd", implAddr)
 }
 
 /*
-프록시 주소 : 0x113BA15b9a46442508758A74e44F96Da6Ce658a7
-구현 컨트랙트 주소 : 0x54873e3f1dC3D9c6E3A8a303887FB2c853C09ebc
+프록시 주소 : 0xe135783649BfA7c9c4c6F8E528C7f56166efC8a6
+구현 컨트랙트 주소 : 0xfeae27388A65eE984F452f86efFEd42AaBD438FD
 */
 
 func TestCallProxy(t *testing.T) {
 
-	proxyAddr := common.HexToAddress("0xdd1a2F168C288019E21148fc1097243823657C09")
+	proxyAddr := common.HexToAddress("0xfeae27388A65eE984F452f86efFEd42AaBD438FD")
 
 	implAbi, err := MyImplementV1MetaData.GetAbi()
 	if err != nil {
@@ -107,7 +107,7 @@ func TestCallImpl(t *testing.T) {
 		t.Error(err)
 	}
 
-	implCtr, err := NewMyImplementV1(common.HexToAddress("0x6E700e8003532212b022FD61b3201E0f773aa6D6"), client)
+	implCtr, err := NewMyImplementV1(common.HexToAddress("0xfeae27388A65eE984F452f86efFEd42AaBD438FD"), client)
 	if err != nil {
 		t.Error(err)
 	}

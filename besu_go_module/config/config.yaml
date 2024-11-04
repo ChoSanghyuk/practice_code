@@ -20,7 +20,7 @@ node:
     accountPrivateKey: "0xd2f6183244f870b96acf9041aa25f1f5ad03e97c82271d04fa24ec51d0f350b2"
   node3: 
     name: "member3"
-    url: "http://127.0.0.1:28546"
+    url: "http://127.0.0.1:28545"
     nodekey: "0xfb765cffb88f7e482893e0be7fbb3501ac7f333c31ce3b329e4e57108fa78f10d36fe1d75bc02fdb2660184d6a1b215ad4b15f1083fbb7cf9fcfadae3493a4d6"
     accountAddress: "0x64b690ce7679527c23191ed839f243b0597dc80f"
     accountPrivateKey: "0x9246f05910c424bda28dfa00c95b838ce28a0410a292c7b37fd792aa38bc74e0"

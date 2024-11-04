@@ -54,7 +54,7 @@ func TestParseReceipt(t *testing.T) {
 }
 
 func TestCustomReceipt(t *testing.T) {
-	hash := common.HexToHash("0x3d18910cd6e35c56308db602568079cabebe95ae2378e680651f0bab971f2766")
+	hash := common.HexToHash("0x3b2ab1d3c7820a084bd215cab13925814e3abbf0d3e0bf121d7f225dc1728c8c")
 
 	receipt, err := TransactionCustomReceipt(client, context.Background(), hash)
 	if err != nil {

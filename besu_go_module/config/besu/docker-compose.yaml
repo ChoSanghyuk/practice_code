@@ -30,9 +30,9 @@ services:
       custom_bridge:
         ipv4_address: 172.18.0.3
     ports:
-      - "30304:30304"
-      - "18545:18545"
-      - "18547:18547"
+      - "30304:30303"
+      - "18545:8545"
+      - "18547:8547"
     volumes:
       - ./Node-2:/opt/besu/node
       - ./genesis:/opt/besu/genesis
@@ -44,9 +44,9 @@ services:
       custom_bridge:
         ipv4_address: 172.18.0.4
     ports:
-      - "30305:30305"
-      - "28545:28545"
-      - "28547:28547"
+      - "30305:30303"
+      - "28545:8545"
+      - "28547:8547"
     volumes:
       - ./Node-3:/opt/besu/node
       - ./genesis:/opt/besu/genesis

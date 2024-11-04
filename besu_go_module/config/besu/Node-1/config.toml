@@ -24,3 +24,5 @@ graphql-http-enabled=true
 graphql-http-host="0.0.0.0"
 graphql-http-port=8547
 
+logging = "DEBUG"
+

@@ -1,18 +1,19 @@
 {
     "config": {
-      "chainId": 1337,
-      "parisBlock": 0,
+      "chainid": 1337,
       "contractSizeLimit": 2147483647,
-      "ethash": {
-        "fixeddifficulty": 100
+      "cancunBlock" : 0,
+      "qbft" : {
+          "blockperiodseconds" : 3,
+          "epochlength" : 30000,
+          "requesttimeoutseconds" : 6
       }
     },
     "nonce": "0x42",
-    "baseFeePerGas":"0x0",
     "timestamp": "0x0",
-    "extraData": "0x11bbe8db4e347b4e8c937c1c8370e4b5ed33adb3db69cbdb7a38e1e50b1b82fa",
+    "extraData": "0xf83aa00000000000000000000000000000000000000000000000000000000000000000d594796ba56fa9b9ce95594a90a9c61ab6fc4cbea466c080c0",
     "gasLimit": "0x1fffffffffffff",
-    "difficulty": "0x10000",
+    "difficulty": "0x00001",
     "mixHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
     "coinbase": "0x0000000000000000000000000000000000000000",
     "alloc": {
