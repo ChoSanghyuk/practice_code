@@ -274,8 +274,8 @@ func (h *SolanaHandler) TokenBalance(c *fiber.Ctx) error {
 	lg.Debug().
 		Msg("GET /spl/query 호출")
 
-	mintWl, _ := h.wm.NextMintInitWallet()
-	trgtWllt := h.wm.NextTrgtWallet()
+	mintWl, trgtWllt := h.wm.NextMintInitWallet()
+	// trgtWllt := h.wm.NextTrgtWallet()
 
 	balance, err := h.solm.TokenBalance(ctx, mintWl.PublicKey(), trgtWllt.PublicKey())
 	if err != nil {
