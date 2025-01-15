@@ -192,8 +192,13 @@ func (h *SolanaHandler) Mint(c *fiber.Ctx) error {
 	auth := initWllt.PublicKey() // mint authority
 
 	sig, _, err := h.solm.Mint(ctx, initWllt, mintWllt.PublicKey(), trgtWllt.PublicKey(), auth, uint64(req.Amount))
-
 	if err != nil {
+		lg.Error().
+			Str("mint_wallet", mintWllt.PublicKey().String()).
+			Str("init_wallet", initWllt.PublicKey().String()).
+			Str("target_wallet", trgtWllt.PublicKey().String()).
+			Err(err).
+			Msg("Mint 오류 발생")
 		return err
 	}
 
@@ -234,6 +239,12 @@ func (h *SolanaHandler) TransferToken(c *fiber.Ctx) error {
 
 	sig, err := h.solm.TransferToken(ctx, sender, sender, receiver, mintWl.PublicKey(), uint64(req.Amount))
 	if err != nil {
+		lg.Error().
+			Str("mint_wallet", mintWl.PublicKey().String()).
+			Str("sender_wallet", sender.PublicKey().String()).
+			Str("target_wallet", receiver.PublicKey().String()).
+			Err(err).
+			Msg("transfer 오류 발생")
 		return err
 	}
 
@@ -268,6 +279,11 @@ func (h *SolanaHandler) TokenBalance(c *fiber.Ctx) error {
 
 	balance, err := h.solm.TokenBalance(ctx, mintWl.PublicKey(), trgtWllt.PublicKey())
 	if err != nil {
+		lg.Error().
+			Str("mint_wallet", mintWl.PublicKey().String()).
+			Str("target_wallet", trgtWllt.PublicKey().String()).
+			Err(err).
+			Msg("query 오류 발생")
 		return err
 	}
 

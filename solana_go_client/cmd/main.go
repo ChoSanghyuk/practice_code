@@ -73,6 +73,12 @@ func main() {
 			lg.Fatal().Err(err).Msg("API 서버 실행 실패")
 		}
 	}()
+	go func() {
+		time.Sleep(1 * time.Second)
+		if err := server.Init_Wallet(); err != nil {
+			lg.Fatal().Err(err).Msg("API 서버 초기화 실패")
+		}
+	}()
 
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, os.Interrupt, syscall.SIGTERM)
