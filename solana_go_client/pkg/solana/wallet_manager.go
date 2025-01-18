@@ -13,8 +13,13 @@ type WalletManager struct {
 	targetAcQ WalletCircleQueue
 }
 
+type SolMI interface {
+	CreateAccount(ctx context.Context) *solana.Wallet
+	CreateAccountWithFaucet(ctx context.Context, solAmount uint64) (*solana.Wallet, error)
+}
+
 // todo. account manager config로 바꿔서 작성
-func NewWalletManager(sm *SolanaManager, conf WalletManagerConfig) (*WalletManager, error) {
+func NewWalletManager(sm SolMI, conf WalletManagerConfig) (*WalletManager, error) {
 
 	mintN := int(conf.N)
 	initN := int(conf.N)

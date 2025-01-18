@@ -1,6 +1,101 @@
-# Solana Go Client
+# Solana 성능 테스트
 
 
+
+## Solana 개요
+
+
+
+### Account
+
+솔라나에서 모든 데이터는 'accounts'에 저장된다. accounts는 key-value store 형태로, address와 account 정보를 매핑하여 관리한다.
+
+![Accounts](./assets/accounts.svg)
+
+AccountInfo는 4개의 필드로 구성된다.
+
+![AccountInfo](./assets/accountinfo.svg)
+
+- `data` : 'account data'로도 불리우며, account의 상태(state) 혹은 실행 가능한 program[^1] 코드를 저장 (xor)
+- `executable` : account가 program인지 나타내는 bool 값
+- `lamports`: account의 lamport[^2] 잔고
+- `owner` : account를 소유하고 있는 Program의 ID (public key)
+
+[^1]: 솔라나의 smart contract
+[^2]: SOL의 최소 단위로 1 SOL = 10억 lamports 
+
+
+
+여기서 살펴보아야 할 것은, 첫번째로 account는 상태값을 저장하는 data account와 실행 코드를 저장하는 program으로 나누어진다. 이더리움은 하나의 contract 안에서 상태와 코드 모두를 관리했던 반면에, 솔라나는 상태와 코드를 별도의 account로 분리해서 관리한다.
+
+두번째로, program account를 포함한 모든 account는 자신을 소유하는 program을 가진다. 소유자 program만이 account의 data를 변경하고 lamport 잔고를 줄일 수 있다(단, 잔고를 늘리는 것은 모두가 가능). 이는, account를 관리하는 주체가 private key를 가진 user account가 아닌 program임을 의미한다.
+
+마지막으로, account의 data 필드는 byte array 타입으로 **고정된** 크기를 가진다. 이더리움은 메모리를 heap 영역에서 관리해서 contract가 저장한 데이터가 동적으로 계속 증가할 수 있었다. 하지만 솔라나는 고정되고 명확한 데이터 레이아웃을 요구하며, 모든 데이터를 바로 stack에서 처리한다. 이로 인해 더 빠르며 더 적은 리소스 사용만으로 데이터를 처리할 수 있지만, 이더리움과는 전혀 다른 smart contract 관리 구조를 가지게 된다. 
+
+
+
+### Program
+
+
+
+Program은 솔라나에서의 smart contract이다. Program은 3가지 주요한 특징을 가진다.
+
+먼저, Program은 로직을 담당하는 account로 한번만 배포된다. 이더리움에서는 실행 코드가 매 contract의 배포 때마다 같이 배포되었다. 하지만 솔라나에서는 실행 코드는 한번만 배포하고 이후 등록된 코드를 꺼내서 쓰는 구조를 가진다. 솔라나에서는 smart contract를 사용하기 위해서는 이미 온체인 상에 있는 program account의 ID 값만 가지고 와서 사용하면 된다.
+
+또한, 솔라나에서 program은 기본적으로 '변경 가능'하다. Program 배포 시, upgrade 권한을 지정할 수 있으며, upgrade 권한이 null이 될 경우, 변경 불가능(immutable)해진다.
+
+끝으로, Program의 실행 코드는 'Instrction'이라는 하위 함수들로 조직되어 있다. Instruction은 transaction의 기본 단위가 되어 온체인에 특정 작업을 처리하도록 요청하는데 사용된다. 요청자는 여러 Instruction을 하나의 transaction으로 묶어 순차적이고 원자성을 보장하는 요청을 보낼 수 있다. 
+
+
+
+여기서 프로그램의 사용을 이더리움의 ERC-20과 같은 토큰 사용에 국한해서 살펴보겠다.
+
+Solana 커뮤니티는 Solana에서의 여러 가지 표준 프로그램들을 모아 SPL(Solana Program Library)로 관리한다. SPL의 일환으로 SPL Token 프로그램이 제공되어, 신규 토큰 생성자는 SPL Token Program의 ID만 가지고 와서 쉽게 신규 토큰을 생성해서 사용할 수 있다. 하지만, 1. solana의 데이터와 로직의 분리와 2.고정된 account의 크기로 인해서 이더리움과 전혀 다른 토큰 구조를 가지게 된다.
+
+
+
+#### SPL Token
+
+[그림 그려]
+
+Program account - mint account - ata account - user account
+
+
+
+
+
+
+
+
+
+transaction
+
+On Solana, we send [transactions](https://solana.com/docs/core/transactions#transaction) to interact with the network. Transactions include one or more [instructions](https://solana.com/docs/core/transactions#instruction), each representing a specific operation to be processed. The execution logic for instructions is stored on [programs](https://solana.com/docs/core/programs) deployed to the Solana network, where each program stores its own set of instructions.
+
+Below are key details about how transactions are executed:
+
+- Execution Order: If a transaction includes multiple instructions, the instructions are processed in the order they are added to the transaction.
+- Atomicity: A transaction is atomic, meaning it either fully completes with all instructions successfully processed, or fails altogether. If any instruction within the transaction fails, none of the instructions are executed.
+
+
+
+- Each instruction specifies the program to execute the instruction, the accounts required by the instruction, and the data required for the instruction's execution.
+
+
+
+Instruction
+
+An [instruction](https://github.com/solana-labs/solana/blob/27eff8408b7223bb3c4ab70523f8a8dca3ca6645/sdk/program/src/instruction.rs#L329) is a request to process a specific action on-chain and is the smallest contiguous unit of execution logic in a [program](https://solana.com/docs/core/accounts#program-account).
+
+
+
+Consensus
+
+
+
+
+
+**[출처]** [[solana\] 표준토큰 SPL token로 알아보는 솔라나 프로그램 구조 기초편](https://blog.naver.com/pjt3591oo/223411225439)|**작성자** [멍개](https://blog.naver.com/pjt3591oo)
 
 ## 토큰 테스트 시나리오
 
@@ -71,52 +166,39 @@ SPL 토큰에 대한 테스트로, 기본적인 토큰의 동작인 deploy, mint
 
 :bulb: 해당 케이스에선 mint account는 N개로 제한하지 않고, 무한히 생성
 
-|  N   | 테스트 시간(min) | 처리 트랜잭션 |  TPS  |
-| :--: | :--------------: | :-----------: | :---: |
-| 1000 |        2         |               | 580.2 |
-|      |                  |               |       |
-|      |                  |               |       |
+|   N   | 테스트 시간(min) | MTT(ms) |  TPS  |     비고     |
+| :---: | :--------------: | :-----: | :---: | :----------: |
+|   1   |        2         |  2054   |  430  |              |
+|  100  |        2         |  1529   | 580.9 |              |
+| 1000  |        2         |  1522   | 580.2 |              |
+| 10000 |        2         |         |       | timeout 발생 |
 
 
 
-#### 2. minting 시나리오
-
-- deploy된 token에 대해서 target account로 추가 minting 수행
-- mint account 수(N)와 target account 수(M)를 변수로 설정하고 parallel 수행 여부 확인
-
-|  N   |  M   | 테스트 시간(min) | 처리 트랜잭션 | TPS  |
-| :--: | :--: | :--------------: | :-----------: | :--: |
-|      |      |                  |               |      |
-|      |      |                  |               |      |
-|      |      |                  |               |      |
-
-
-
-#### 3. transfer 시나리오
+#### 2. transfer 시나리오
 
 - deploy된 token에 대해서 target account에 transfer 수행
 - init_holder 수(N)를 변수로 설정하고 parallel 수행 여부에 따른 TPS 확인
 
-|  N   | 테스트 시간(min) | 처리 트랜잭션 | TPS  |
-| :--: | :--------------: | :-----------: | :--: |
-|      |                  |               |      |
-|      |                  |               |      |
-|      |                  |               |      |
+|  N   |  M   | 테스트 시간(min) | MTT(ms) | TPS  |
+| :--: | :--: | :--------------: | :-----: | :--: |
+|  1   | 1000 |                  |         |      |
+| 100  | 1000 |        2         |   548   | 1632 |
+| 1000 | 1000 |        2         |   549   | 1785 |
+| 1000 |  1   |                  |         |      |
 
 
 
-#### 4. query 시나리오
+#### 3. query 시나리오
 
-- 2번 혹은 3번 시나리오 수행 직후 target account에 대해서 token account의 balance 조회
+- N개의 init_holder에 대해서 balance 조회 진행
 
-- 단, M개의 target account가 N개의 token에 대해 전부 한번이라도 mint 혹은 transfer를 수행한 이후 수행 필요
+|  N   | 테스트 시간(min) | MTT(ms) |  TPS  |
+| :--: | :--------------: | :-----: | :---: |
+| 100  |        2         |  12.17  | 73257 |
+| 1000 |        2         |         |       |
 
-| 차수 | 테스트 시간(min) | 처리 트랜잭션 | TPS  |
-| :--: | :--------------: | :-----------: | :--: |
-|      |                  |               |      |
-|      |                  |               |      |
 
-(N:  / M: )
 
 
 
