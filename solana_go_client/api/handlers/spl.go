@@ -145,8 +145,8 @@ func (h *SplHandler) SetMintAccount(c *fiber.Ctx) error {
 			mintWllt, initWllt := h.wm.NextMintInitWallet()
 			auth := initWllt.PublicKey()
 
-			h.solm.Mint(ctx, initWllt, mintWllt.PublicKey(), initWllt.PublicKey(), auth, uint64(req.Amount))
-			// _, _, err := h.solm.Mint(ctx, initWllt, mintWllt, initWllt.PublicKey(), auth, auth, )
+			// _, _, err := h.solm.Mint(ctx, initWllt, mintWllt.PublicKey(), initWllt.PublicKey(), auth, uint64(req.Amount))
+			_, _, err := h.solm.SetMintAccountAndMint(ctx, initWllt, mintWllt, initWllt.PublicKey(), auth, auth, uint64(req.Amount))
 			if err != nil {
 				ch <- err
 			}

@@ -80,16 +80,16 @@ func TestUnit(t *testing.T) {
 	// 54YCaNP5JfZuZb44qxPsjRjEghQDnXCMDMHvKR2484oaM2tgiufDrzRpNsHv7pR3HDrs3jCTWHBv5XeXCG3indn3
 
 	t.Run("account fund", func(t *testing.T) {
-		wallet, err := solana.WalletFromPrivateKeyBase58("54YCaNP5JfZuZb44qxPsjRjEghQDnXCMDMHvKR2484oaM2tgiufDrzRpNsHv7pR3HDrs3jCTWHBv5XeXCG3indn3")
+		wallet, err := solana.WalletFromPrivateKeyBase58("32JsF4FWwjrwdiEGfoFvTCGpZDEckeqkTq7WmVF1AH2rDLtHy345KbmYZYvDvNmyaesgjJVRs8jXbMNhkUobk3Hr")
 		require.NoError(t, err)
 
-		tx, err := sm.RequestAirdrop(context.Background(), wallet, 1000)
+		tx, err := sm.RequestAirdrop(context.Background(), wallet, 100)
 		require.NoError(t, err)
 		log.Println(tx)
 	})
 
 	t.Run("account balance query", func(t *testing.T) {
-		wallet, err := solana.WalletFromPrivateKeyBase58("4LfM3TqMiK3oMRrMmK2AZVg1a1BvDxU2rE7AJdX9jSw8o3RW5FXnFggJLJGA4vFX97RVazQ4q2UUUJkmpVgRGtej")
+		wallet, err := solana.WalletFromPrivateKeyBase58("5MBFFymun7cJoACtJ1gERkhAwcENiYsQT98rNDHj7XEEcSDbfMrzczUXkgx8EJZ7zZ4bK8o1NirKXPu4TkwX2MG5")
 		require.NoError(t, err)
 
 		pubKey := wallet.PublicKey()

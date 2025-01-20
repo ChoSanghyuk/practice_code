@@ -84,6 +84,12 @@ func (m *SolanaManager) CreateAccountWithFaucet(ctx context.Context, solAmount u
 // NewToken
 func (m *SolanaManager) SetMintAccount(ctx context.Context, mintWallet, payerWallet *solana.Wallet, mintAuthority, freezeAuthority solana.PublicKey) (*solana.Signature, error) {
 
+	info, err := m.AccountInfo(ctx, mintWallet.PublicKey())
+	if info != nil {
+		fmt.Printf("%v", *info.Value)
+		return nil, err
+	}
+
 	min, err := m.rpc.GetMinimumBalanceForRentExemption(ctx, token.MINT_SIZE, "")
 	if err != nil {
 		return nil, err
@@ -122,7 +128,6 @@ func (m *SolanaManager) Mint(ctx context.Context, payerWallet *solana.Wallet, mi
 		m.logger.Error().Err(err).Msg("Failed to find associated token address")
 		return nil, solana.PublicKey{}, err
 	}
-	m.logger.Info().Msg(ata.String())
 
 	// 이미 생성된 ata에 대해서는 생성 생략
 	info, err := m.AccountInfo(ctx, ata)
@@ -153,6 +158,11 @@ func (m *SolanaManager) Mint(ctx context.Context, payerWallet *solana.Wallet, mi
 }
 
 func (m *SolanaManager) SetMintAccountAndMint(ctx context.Context, payerWallet, mintWallet *solana.Wallet, owner, mintAuthority, freezeAuthority solana.PublicKey, amount uint64) (*solana.Signature, solana.PublicKey, error) {
+
+	info, err := m.AccountInfo(ctx, mintWallet.PublicKey())
+	if info != nil {
+		return nil, solana.PublicKey{}, err
+	}
 
 	min, err := m.rpc.GetMinimumBalanceForRentExemption(ctx, token.MINT_SIZE, "")
 	if err != nil {

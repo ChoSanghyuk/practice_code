@@ -154,7 +154,7 @@ func genWallets(path string, solm SolMI) error {
 		write(fmt.Sprintf("%s:%s", mint, wallet.PrivateKey)) // todo key값 변수화
 	}
 	for i := 0; i < totalNumber; i++ {
-		wallet, err = solm.CreateAccountWithFaucet(context.Background(), 1000)
+		wallet, err = solm.CreateAccountWithFaucet(context.Background(), 100)
 		write(fmt.Sprintf("%s:%s", initHolder, wallet.PrivateKey))
 	}
 	if err != nil {
