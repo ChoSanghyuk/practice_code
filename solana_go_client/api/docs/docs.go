@@ -15,6 +15,52 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/account/balance": {
+            "get": {
+                "description": "SOL Balance를 조회합니다",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "/account"
+                ],
+                "summary": "solana balance query",
+                "parameters": [
+                    {
+                        "description": "Get SOL Balance",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/parameters.TargetSolBalanceReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/parameters.CommonResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/parameters.TokenBalanceRes"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
         "/spl/deploy": {
             "post": {
                 "description": "SPL Token을 생성합니다",
@@ -223,6 +269,41 @@ const docTemplate = `{
                 }
             }
         },
+        "/spl/target_query": {
+            "get": {
+                "description": "Token Balance를 조회합니다",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "/spl"
+                ],
+                "summary": "Token Query",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/parameters.CommonResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/parameters.TokenBalanceRes"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
         "/spl/transfer": {
             "post": {
                 "description": "Token을 전송합니다.",
@@ -313,6 +394,14 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "signature": {
+                    "type": "string"
+                }
+            }
+        },
+        "parameters.TargetSolBalanceReq": {
+            "type": "object",
+            "properties": {
+                "owner_account": {
                     "type": "string"
                 }
             }

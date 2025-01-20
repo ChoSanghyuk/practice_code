@@ -34,7 +34,9 @@ func NewServerWith(conf Config,
 	middlewares.SetupMiddlewares(router)
 
 	spl := router.Group("spl")
-	handlers.NewSolanaHandler(solm, wm).Append(spl)
+	handlers.NewSplHandler(solm, wm).Append(spl)
+	account := router.Group("account")
+	handlers.NewAccountHandler(solm).Append(account)
 
 	app.Get("/docs/*", swagger.HandlerDefault)
 	router.Get("/docs/*", swagger.HandlerDefault)

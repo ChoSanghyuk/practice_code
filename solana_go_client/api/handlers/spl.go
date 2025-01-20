@@ -12,27 +12,28 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-type SolanaHandler struct {
+type SplHandler struct {
 	solm   *solana.SolanaManager
 	wm     *solana.WalletManager
 	logger log.Logger
 }
 
-func NewSolanaHandler(solm *solana.SolanaManager, wm *solana.WalletManager) *SolanaHandler {
-	return &SolanaHandler{
+func NewSplHandler(solm *solana.SolanaManager, wm *solana.WalletManager) *SplHandler {
+	return &SplHandler{
 		solm:   solm,
 		wm:     wm,
 		logger: log.GetLogger("solana_handler"),
 	}
 }
 
-func (h *SolanaHandler) Append(r fiber.Router) {
+func (h *SplHandler) Append(r fiber.Router) {
 	r.Post("/deploy", h.DeployToken)
 	r.Post("/deploy-with-mint", middlewares.Validate(&parameters.CreateTokenWithMintReq{}), h.DeployWithMint)
 	r.Post("/set-mint-account", middlewares.Validate(&parameters.CreateTokenWithMintReq{}), h.SetMintAccount)
 	r.Post("/mint", middlewares.Validate(&parameters.PerformanceMintReq{}), h.Mint)
 	r.Post("/transfer", middlewares.Validate(&parameters.TransferTokenReq{}), h.TransferToken)
 	r.Get("/query", h.TokenBalance)
+	r.Get("/target_query", middlewares.Validate(&parameters.TargetTokenBalanceReq{}), h.TargetTokenBalance)
 }
 
 // @Summary SPL Token 생성
@@ -42,7 +43,7 @@ func (h *SolanaHandler) Append(r fiber.Router) {
 // @Produce json
 // @Success 200 {object} parameters.CommonResponse{data=parameters.PerformanceCreateSPLTokenRes}
 // @Router /spl/deploy [post]
-func (h *SolanaHandler) DeployToken(c *fiber.Ctx) error {
+func (h *SplHandler) DeployToken(c *fiber.Ctx) error {
 	reqID := c.Locals(types.RequestID).(string)
 	lg := h.logger.SetReqID(reqID)
 	ctx := context.WithValue(c.Context(), types.RequestID, reqID)
@@ -77,7 +78,7 @@ func (h *SolanaHandler) DeployToken(c *fiber.Ctx) error {
 // @Param body body parameters.CreateTokenWithMintReq true "Performance Create SPL Token And Mint Request"
 // @Success 200 {object} parameters.CommonResponse{data=parameters.PerformanceCreateSPLTokenRes}
 // @Router /spl/deploy-with-mint [post]
-func (h *SolanaHandler) DeployWithMint(c *fiber.Ctx) error {
+func (h *SplHandler) DeployWithMint(c *fiber.Ctx) error {
 	reqID := c.Locals(types.RequestID).(string)
 	lg := h.logger.SetReqID(reqID)
 	ctx := context.WithValue(c.Context(), types.RequestID, reqID)
@@ -119,7 +120,7 @@ func (h *SolanaHandler) DeployWithMint(c *fiber.Ctx) error {
 // @Param body body parameters.CreateTokenWithMintReq true "Performance Create SPL Token And Mint Request"
 // @Success 200 {object} parameters.CommonResponse{data=parameters.PerformanceMintRes}
 // @Router /spl/set-mint-account [post]
-func (h *SolanaHandler) SetMintAccount(c *fiber.Ctx) error {
+func (h *SplHandler) SetMintAccount(c *fiber.Ctx) error {
 	reqID := c.Locals(types.RequestID).(string)
 	lg := h.logger.SetReqID(reqID)
 	ctx := context.WithValue(c.Context(), types.RequestID, reqID)
@@ -144,7 +145,8 @@ func (h *SolanaHandler) SetMintAccount(c *fiber.Ctx) error {
 			mintWllt, initWllt := h.wm.NextMintInitWallet()
 			auth := initWllt.PublicKey()
 
-			_, _, err := h.solm.SetMintAccountAndMint(ctx, initWllt, mintWllt, initWllt.PublicKey(), auth, auth, uint64(req.Amount))
+			h.solm.Mint(ctx, initWllt, mintWllt.PublicKey(), initWllt.PublicKey(), auth, uint64(req.Amount))
+			// _, _, err := h.solm.Mint(ctx, initWllt, mintWllt, initWllt.PublicKey(), auth, auth, )
 			if err != nil {
 				ch <- err
 			}
@@ -173,7 +175,7 @@ func (h *SolanaHandler) SetMintAccount(c *fiber.Ctx) error {
 // @Param body body parameters.PerformanceMintReq true "Performance Create SPL Token Request"
 // @Success 200 {object} parameters.CommonResponse{data=parameters.PerformanceMintRes}
 // @Router /spl/mint [post]
-func (h *SolanaHandler) Mint(c *fiber.Ctx) error {
+func (h *SplHandler) Mint(c *fiber.Ctx) error {
 	reqID := c.Locals(types.RequestID).(string)
 	lg := h.logger.SetReqID(reqID)
 	ctx := context.WithValue(c.Context(), types.RequestID, reqID)
@@ -220,7 +222,7 @@ func (h *SolanaHandler) Mint(c *fiber.Ctx) error {
 // @Param body body parameters.TransferTokenReq true "Transfer SPL Token"
 // @Success 200 {object} parameters.CommonResponse{data=parameters.PerformanceMintRes}
 // @Router /spl/transfer [post]
-func (h *SolanaHandler) TransferToken(c *fiber.Ctx) error {
+func (h *SplHandler) TransferToken(c *fiber.Ctx) error {
 	reqID := c.Locals(types.RequestID).(string)
 	lg := h.logger.SetReqID(reqID)
 	ctx := context.WithValue(c.Context(), types.RequestID, reqID)
@@ -265,7 +267,7 @@ func (h *SolanaHandler) TransferToken(c *fiber.Ctx) error {
 // @Produce json
 // @Success 200 {object} parameters.CommonResponse{data=parameters.TokenBalanceRes}
 // @Router /spl/query [get]
-func (h *SolanaHandler) TokenBalance(c *fiber.Ctx) error {
+func (h *SplHandler) TokenBalance(c *fiber.Ctx) error {
 
 	reqID := c.Locals(types.RequestID).(string)
 	lg := h.logger.SetReqID(reqID)
@@ -297,7 +299,51 @@ func (h *SolanaHandler) TokenBalance(c *fiber.Ctx) error {
 				},
 			),
 		)
+}
 
+// @Summary Token Query
+// @Description Token Balance를 조회합니다
+// @Tags /spl
+// @Accept json
+// @Produce json
+// @Success 200 {object} parameters.CommonResponse{data=parameters.TokenBalanceRes}
+// @Router /spl/target_query [get]
+func (h *SplHandler) TargetTokenBalance(c *fiber.Ctx) error {
+
+	reqID := c.Locals(types.RequestID).(string)
+	lg := h.logger.SetReqID(reqID)
+	ctx := context.WithValue(c.Context(), types.RequestID, reqID)
+
+	req := &parameters.TargetTokenBalanceReq{}
+	err := c.BodyParser(req)
+	if err != nil {
+		return err
+	}
+
+	lg.Debug().
+		Msg("GET /spl/target_query 호출")
+
+	mintWl, _ := h.solm.PublicKeyFromAddr(req.MintAccount)
+	trgtWllt, _ := h.solm.PublicKeyFromAddr(req.OwnerAccount)
+
+	balance, err := h.solm.TokenBalance(ctx, mintWl, trgtWllt)
+	if err != nil {
+		lg.Error().
+			Str("mint_wallet", req.MintAccount).
+			Str("target_wallet", req.OwnerAccount).
+			Err(err).
+			Msg("target query 오류 발생")
+		return err
+	}
+
+	return c.Status(fiber.StatusOK).
+		JSON(
+			parameters.NewSuccessResponse(
+				parameters.TargetBalanceRes{
+					Balance: *balance,
+				},
+			),
+		)
 }
 
 // // @Summary 전송

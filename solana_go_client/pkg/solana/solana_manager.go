@@ -57,13 +57,26 @@ func (m *SolanaManager) RequestAirdrop(ctx context.Context, wallet *solana.Walle
 	return sig.String(), nil
 }
 
+// func (m *SolanaManager) RequestAirdropSync(ctx context.Context, wallet *solana.Wallet, amount uint64) (string, error) {
+// 	sig, err := m.rpc.RequestAirdrop(ctx, wallet.PublicKey(), solana.LAMPORTS_PER_SOL*amount, rpc.CommitmentFinalized)
+// 	if err != nil {
+// 		return "", err
+// 	}
+
+// 	_, err = m.waitForConfirmation(ctx, m.ws, sig, nil)
+// 	if err != nil {
+// 		return "", fmt.Errorf("airdrop 동기 요청 실패 sig: %s, err : %w", sig, err)
+// 	}
+
+// 	return sig.String(), nil
+// }
+
 func (m *SolanaManager) CreateAccountWithFaucet(ctx context.Context, solAmount uint64) (*solana.Wallet, error) {
 	wallet := solana.NewWallet()
-	_, err := m.rpc.RequestAirdrop(ctx, wallet.PublicKey(), solana.LAMPORTS_PER_SOL*solAmount, rpc.CommitmentFinalized)
+	_, err := m.RequestAirdrop(ctx, wallet, solAmount)
 	if err != nil {
 		return nil, err
 	}
-	// m.logger.Info().Msg("airdrop sig :" + sig.String())
 
 	return wallet, nil
 }
@@ -406,7 +419,7 @@ func (m *SolanaManager) latestBlockHash(ctx context.Context) (solana.Hash, error
 	return recent.Value.Blockhash, nil
 }
 
-func (m *SolanaManager) balance(ctx context.Context, pubKey solana.PublicKey) (*big.Float, error) {
+func (m *SolanaManager) Balance(ctx context.Context, pubKey solana.PublicKey) (*big.Float, error) {
 	balance, err := m.rpc.GetBalance(ctx, pubKey, m.conf.Commitment)
 	if err != nil {
 		return nil, err

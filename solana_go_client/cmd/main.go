@@ -44,15 +44,16 @@ func main() {
 		lg.Fatal().Err(err).Msg("Solana Manager 초기화 실패")
 	}
 
-	wm, err := solana.NewWalletManager(solm, conf.WalletConfig())
+	path, _ := os.Getwd()
+	wm, err := solana.NewWalletManager(path+"/wallets.txt", solm, conf.WalletConfig())
 	if err != nil {
 		lg.Fatal().Err(err).Msg("Wallet Manager 초기화 실패")
 	}
 
-	err = logecordWallet(wm.AllWallets())
-	if err != nil {
-		lg.Fatal().Err(err).Msg("Wallet list 저장 실패")
-	}
+	// err = logecordWallet(wm.AllAddress())
+	// if err != nil {
+	// 	lg.Fatal().Err(err).Msg("Wallet list 저장 실패")
+	// }
 	////////////////////////////////////////////////////
 	// API서버 초기화
 	server, err := api.NewServerWith(conf.APIConfig(), solm, wm)
@@ -114,31 +115,4 @@ func loadConfig() (*config.Config, error) {
 	}
 	fmt.Printf("config file : %s/%s\n", configFilePath, configFileName)
 	return conf, nil
-}
-
-func logecordWallet(wlm map[string][]string) error {
-	// wallet_list_map
-	name := "wallet_" + time.Now().Format("20060102150405")
-	file, err := os.Create(name)
-	if err != nil {
-		return err
-	}
-	defer file.Close()
-
-	write := func(buf string) {
-		if err != nil {
-			return
-		}
-		_, err = file.Write([]byte(buf))
-	}
-
-	for k, v := range wlm {
-		write(k)
-		for _, w := range v {
-			write("\n")
-			write(w)
-		}
-		write("\n\n")
-	}
-	return err
 }

@@ -36,6 +36,11 @@ definitions:
       signature:
         type: string
     type: object
+  parameters.TargetSolBalanceReq:
+    properties:
+      owner_account:
+        type: string
+    type: object
   parameters.TokenBalanceRes:
     properties:
       balance:
@@ -56,6 +61,33 @@ info:
   title: SOL API
   version: 1.0.0
 paths:
+  /account/balance:
+    get:
+      consumes:
+      - application/json
+      description: SOL Balance를 조회합니다
+      parameters:
+      - description: Get SOL Balance
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/parameters.TargetSolBalanceReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/parameters.CommonResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/parameters.TokenBalanceRes'
+              type: object
+      summary: solana balance query
+      tags:
+      - /account
   /spl/deploy:
     post:
       consumes:
@@ -175,6 +207,26 @@ paths:
                   $ref: '#/definitions/parameters.PerformanceMintRes'
               type: object
       summary: 테스트 사전 준비
+      tags:
+      - /spl
+  /spl/target_query:
+    get:
+      consumes:
+      - application/json
+      description: Token Balance를 조회합니다
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/parameters.CommonResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/parameters.TokenBalanceRes'
+              type: object
+      summary: Token Query
       tags:
       - /spl
   /spl/transfer:

@@ -21,11 +21,29 @@ func (m *SolMock) CreateAccountWithFaucet(ctx context.Context, solAmount uint64)
 	return wallet, nil
 }
 
+func (m *SolMock) WalletFromPK(pk string) (*solana.Wallet, error) {
+	return solana.WalletFromPrivateKeyBase58(pk)
+}
+
+func TestInitAccountManager(t *testing.T) {
+
+	sm := &SolMock{}
+
+	wm, err := NewWalletManager("../../wallets.txt", sm, WalletManagerConfig{
+		N: 10,
+		M: 10,
+	})
+	if err != nil {
+		log.Fatalf("Error creating account manager: %v", err)
+	}
+	log.Printf("%v", wm.AllAddress())
+
+}
 func TestAccountManager(t *testing.T) {
 
 	sm := &SolMock{}
 
-	am, err := NewWalletManager(sm, WalletManagerConfig{
+	am, err := NewWalletManager("", sm, WalletManagerConfig{
 		N: 1000,
 		M: 10,
 	})

@@ -73,7 +73,7 @@ func TestUnit(t *testing.T) {
 
 	t.Run("account creation", func(t *testing.T) {
 		// payer, err := sm.CreateAccountWithFaucet(context.Background(), 1000000)
-		wallet, err := sm.CreateAccountWithFaucet(context.Background(), 1000000)
+		wallet, err := sm.CreateAccountWithFaucet(context.Background(), 1000)
 		require.NoError(t, err)
 		log.Printf("%v", wallet.PrivateKey)
 	})
@@ -89,13 +89,24 @@ func TestUnit(t *testing.T) {
 	})
 
 	t.Run("account balance query", func(t *testing.T) {
-		wallet, err := solana.WalletFromPrivateKeyBase58("4gHbu2pQhL7BKAWSsXfaoQ7mZgy4CXUWoyTp79hwVrFFYffELW7WFk6GywLAewD7JhxpMkK2DSg8rxepsbhJ38au")
+		wallet, err := solana.WalletFromPrivateKeyBase58("4LfM3TqMiK3oMRrMmK2AZVg1a1BvDxU2rE7AJdX9jSw8o3RW5FXnFggJLJGA4vFX97RVazQ4q2UUUJkmpVgRGtej")
 		require.NoError(t, err)
 
 		pubKey := wallet.PublicKey()
 		log.Printf("public key: %s", pubKey)
 
-		balance, err := sm.balance(context.Background(), pubKey)
+		balance, err := sm.Balance(context.Background(), pubKey)
+		require.NoError(t, err)
+		log.Println(balance, "balance")
+
+	})
+
+	t.Run("account balance query by address", func(t *testing.T) {
+
+		pubKey := solana.MustPublicKeyFromBase58("7JTQ3nQzTwwW9F8NZZiP23PkK4SNXoNuGQAuC68WVVVp")
+		log.Printf("public key: %s", pubKey)
+
+		balance, err := sm.Balance(context.Background(), pubKey)
 		require.NoError(t, err)
 		log.Println(balance, "balance")
 
@@ -151,7 +162,7 @@ func TestUnit(t *testing.T) {
 		_, err := sm.RequestAirdrop(context.Background(), account, 10)
 		require.NoError(t, err)
 
-		balance, err := sm.balance(context.Background(), account.PublicKey())
+		balance, err := sm.Balance(context.Background(), account.PublicKey())
 		require.NoError(t, err)
 		log.Println(account.PublicKey().String())
 		log.Println(balance, "balance")
@@ -161,7 +172,7 @@ func TestUnit(t *testing.T) {
 		// account := "2GXNA7Vt1hRsre9HT7L3CRpiFznZwbc2mAapAbBVAkZf"
 		// pubKey := solana.MustPublicKeyFromBase58(account)
 
-		balance, err := sm.balance(context.Background(), payerW.PublicKey())
+		balance, err := sm.Balance(context.Background(), payerW.PublicKey())
 		require.NoError(t, err)
 		log.Println(balance, "balance")
 	})
@@ -264,7 +275,7 @@ func TestUnit(t *testing.T) {
 	})
 
 	t.Run("sig verify - cache", func(t *testing.T) {
-		sig := solana.MustSignatureFromBase58("3TBd4ZcxC5agtgzkjb7QKAQL2cqCEeM5Cjt7yUg4QL4GZFHQvAgBgNNkZ2FAEwnaihiHuzSsD6neFMoqrLqSUPJK")
+		sig := solana.MustSignatureFromBase58("2MtZD7v5sv8eruBxWjNu7bddfCVUiaWb8AgDMxNWCt6pPXcu87M4pM9rsoASBQsEbA5GPGd5hDwrDbUcknEiGboA")
 		// sig, err := solana.SignatureFromBase58("2mpeu4DHc8jK4tJ7g7QxErS43pP8wo3wh4CaH3hDP2W2RTK5RF2mxsw1DkroVuuUSjs5Am7bPyuSTkB1sxUaktoB")
 		require.NoError(t, err)
 

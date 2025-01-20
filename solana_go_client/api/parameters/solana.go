@@ -47,3 +47,16 @@ type TokenBalanceRes struct {
 	OwnerAccount string `json:"owner_account"`
 	Balance      string `json:"balance"`
 }
+
+type TargetTokenBalanceReq struct {
+	MintAccount  string `json:"mint_account"`
+	OwnerAccount string `json:"owner_account"`
+}
+
+type TargetSolBalanceReq struct {
+	OwnerAccount string `json:"owner_account"`
+}
+
+type TargetBalanceRes struct {
+	Balance string `json:"balance"`
+}

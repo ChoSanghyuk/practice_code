@@ -2,6 +2,12 @@
 
 
 
+Solana 성능 테스트를 정리한 문서입니다.
+
+테스트 기록에 앞서 테스트를 이해하는데 필요한 개념만 간략하게 정리하였습니다.
+
+
+
 ## Solana 개요
 
 
@@ -30,82 +36,79 @@ AccountInfo는 4개의 필드로 구성된다.
 
 두번째로, program account를 포함한 모든 account는 자신을 소유하는 program을 가진다. 소유자 program만이 account의 data를 변경하고 lamport 잔고를 줄일 수 있다(단, 잔고를 늘리는 것은 모두가 가능). 이는, account를 관리하는 주체가 private key를 가진 user account가 아닌 program임을 의미한다.
 
-마지막으로, account의 data 필드는 byte array 타입으로 **고정된** 크기를 가진다. 이더리움은 메모리를 heap 영역에서 관리해서 contract가 저장한 데이터가 동적으로 계속 증가할 수 있었다. 하지만 솔라나는 고정되고 명확한 데이터 레이아웃을 요구하며, 모든 데이터를 바로 stack에서 처리한다. 이로 인해 더 빠르며 더 적은 리소스 사용만으로 데이터를 처리할 수 있지만, 이더리움과는 전혀 다른 smart contract 관리 구조를 가지게 된다. 
+마지막으로, account의 data 필드는 byte array 타입으로 **고정된** 크기를 가진다. 이더리움은 메모리를 heap 영역에서 관리해서 contract가 저장한 데이터가 동적으로 계속 증가할 수 있었다. 하지만 솔라나는 고정되고 명확한 데이터 레이아웃을 요구하며, 모든 데이터를 stack에서 처리한다. 이로 인해 더 빠르며 더 적은 리소스 사용만으로 데이터를 처리할 수 있지만, 더 이상 하나의 smart contract에서 저장 데이터를 무한히 늘릴 수 없다.
 
 
 
 ### Program
 
-
-
 Program은 솔라나에서의 smart contract이다. Program은 3가지 주요한 특징을 가진다.
 
 먼저, Program은 로직을 담당하는 account로 한번만 배포된다. 이더리움에서는 실행 코드가 매 contract의 배포 때마다 같이 배포되었다. 하지만 솔라나에서는 실행 코드는 한번만 배포하고 이후 등록된 코드를 꺼내서 쓰는 구조를 가진다. 솔라나에서는 smart contract를 사용하기 위해서는 이미 온체인 상에 있는 program account의 ID 값만 가지고 와서 사용하면 된다.
 
-또한, 솔라나에서 program은 기본적으로 '변경 가능'하다. Program 배포 시, upgrade 권한을 지정할 수 있으며, upgrade 권한이 null이 될 경우, 변경 불가능(immutable)해진다.
+또한, 솔라나에서 program은 기본적으로 '변경 가능'하다. Program 배포 시 upgrade 권한을 지정할 수 있으며, upgrade 권한이 null이 될 경우 변경 불가능(immutable)해진다.
 
 끝으로, Program의 실행 코드는 'Instrction'이라는 하위 함수들로 조직되어 있다. Instruction은 transaction의 기본 단위가 되어 온체인에 특정 작업을 처리하도록 요청하는데 사용된다. 요청자는 여러 Instruction을 하나의 transaction으로 묶어 순차적이고 원자성을 보장하는 요청을 보낼 수 있다. 
 
 
 
+Solana의 주요 프로그램 종류로는 다음과 같이 있다.
+
+- Native Program
+  - System Program : Account의 생성 및 Owner Program 지정 수행
+  - BPF Loader : Native Program이 아닌 모든 Program의 owner로, program의 배포, 수정, 실행을 담당
+- SPL Program : Solana 커뮤니티가 관리하는 표준 프로그램들의 집합
+- Custom Program : 사용자 정의 프로그램
+
+
+
 여기서 프로그램의 사용을 이더리움의 ERC-20과 같은 토큰 사용에 국한해서 살펴보겠다.
 
-Solana 커뮤니티는 Solana에서의 여러 가지 표준 프로그램들을 모아 SPL(Solana Program Library)로 관리한다. SPL의 일환으로 SPL Token 프로그램이 제공되어, 신규 토큰 생성자는 SPL Token Program의 ID만 가지고 와서 쉽게 신규 토큰을 생성해서 사용할 수 있다. 하지만, 1. solana의 데이터와 로직의 분리와 2.고정된 account의 크기로 인해서 이더리움과 전혀 다른 토큰 구조를 가지게 된다.
+Solana 커뮤니티는 Solana에서의 여러 가지 표준 프로그램들을 모아 SPL(Solana Program Library)로 관리한다. SPL의 일환으로 SPL Token 프로그램이 제공되어, 신규 토큰 생성자는 SPL Token Program의 ID만 가지고 와서 쉽게 신규 토큰을 생성해서 사용할 수 있다. 하지만, 1. 'solana의 데이터와 로직의 분리'와 2.'고정된 account의 크기' 3.'SVM의 병렬처리[^3]'로 인해서 이더리움과 전혀 다른 토큰 구조를 가지게 된다.
+
+[^3]: 솔라나의 SVM(Sealeve VM)은 트랜잭션들이 같은 account data를 덮어쓰지 않는다면 parallel로 처리한다.
 
 
 
 #### SPL Token
 
-[그림 그려]
+토큰을 생성해서 사용하게 된다면, 다음과 같은 account 구조가 나오게 된다.
 
-Program account - mint account - ata account - user account
+![image-20250118155217139](./assets/image-20250118155217139.png)
 
+- Program Account[^4]
+  - SPL Token Program account로, Token의 실행 로직이 들어있다.
+- Mint Account
+  - 생성된 토큰 그 자체를 나타내는 account
+  - 토큰에 대한 메타 정보 (mintAuthority, freezeAuthority, totalBalance 등)을 저장한다.
+  - :bulb: 단, 누가 얼마큼을 가지고 있는지는 저장하고 있지 않다.
+- Token Account
+  - 개개인이 들고 있는 토큰의 수량 정보 및 메타 정보를 저장한다.
+  - 주로 랜덤한 주소가 아닌, user account의 주소와 mint account의 주소를 해시하여 생성한다.
+- User Account
+  - system account 혹은 native account라고 불리면 일반적인 사용자의 account를 의미한다.
 
-
-
-
-
-
-
-
-transaction
-
-On Solana, we send [transactions](https://solana.com/docs/core/transactions#transaction) to interact with the network. Transactions include one or more [instructions](https://solana.com/docs/core/transactions#instruction), each representing a specific operation to be processed. The execution logic for instructions is stored on [programs](https://solana.com/docs/core/programs) deployed to the Solana network, where each program stores its own set of instructions.
-
-Below are key details about how transactions are executed:
-
-- Execution Order: If a transaction includes multiple instructions, the instructions are processed in the order they are added to the transaction.
-- Atomicity: A transaction is atomic, meaning it either fully completes with all instructions successfully processed, or fails altogether. If any instruction within the transaction fails, none of the instructions are executed.
+[^4]: Program account에 대한 설명은 편의상 약식으로 표현됨
 
 
 
-- Each instruction specifies the program to execute the instruction, the accounts required by the instruction, and the data required for the instruction's execution.
-
-
-
-Instruction
-
-An [instruction](https://github.com/solana-labs/solana/blob/27eff8408b7223bb3c4ab70523f8a8dca3ca6645/sdk/program/src/instruction.rs#L329) is a request to process a specific action on-chain and is the smallest contiguous unit of execution logic in a [program](https://solana.com/docs/core/accounts#program-account).
-
-
-
-Consensus
+이러한 구조적인 차이로 인해서, smart contract를 이더리움과 동일하게 동작하도록 작성하는 것은 불가능하다(매우 권장되지 않는다). 
 
 
 
 
 
-**[출처]** [[solana\] 표준토큰 SPL token로 알아보는 솔라나 프로그램 구조 기초편](https://blog.naver.com/pjt3591oo/223411225439)|**작성자** [멍개](https://blog.naver.com/pjt3591oo)
-
-## 토큰 테스트 시나리오
+## SPL 토큰 테스트 시나리오
 
 
 
-SPL 토큰에 대한 테스트로, 기본적인 토큰의 동작인 deploy, mint, transfer, query 테스트 수행
+SPL 토큰에 대한 테스트로, 기본적인 토큰의 동작인 deploy, mint, transfer, query 테스트 수행한다.
 
 
 
-### 계정 세팅
+### 테스트 설계
+
+#### 계정 세팅
 
 #### account 종류
 
@@ -182,7 +185,7 @@ SPL 토큰에 대한 테스트로, 기본적인 토큰의 동작인 deploy, mint
 
 |  N   |  M   | 테스트 시간(min) | MTT(ms) | TPS  |
 | :--: | :--: | :--------------: | :-----: | :--: |
-|  1   | 1000 |                  |         |      |
+|  1   | 1000 |        2         |  5353   | 163  |
 | 100  | 1000 |        2         |   548   | 1632 |
 | 1000 | 1000 |        2         |   549   | 1785 |
 | 1000 |  1   |                  |         |      |
@@ -193,10 +196,12 @@ SPL 토큰에 대한 테스트로, 기본적인 토큰의 동작인 deploy, mint
 
 - N개의 init_holder에 대해서 balance 조회 진행
 
-|  N   | 테스트 시간(min) | MTT(ms) |  TPS  |
-| :--: | :--------------: | :-----: | :---: |
-| 100  |        2         |  12.17  | 73257 |
-| 1000 |        2         |         |       |
+|   N   | 테스트 시간(min) | MTT(ms) |  TPS  |
+| :---: | :--------------: | :-----: | :---: |
+|   1   |        2         |  11.39  | 86268 |
+|  100  |        2         |  12.17  | 73257 |
+| 1000  |        2         |         |       |
+| 10000 |        2         |         |       |
 
 
 
