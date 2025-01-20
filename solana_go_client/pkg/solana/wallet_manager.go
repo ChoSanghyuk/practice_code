@@ -7,6 +7,7 @@ import (
 	"os"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/gagliardetto/solana-go"
 )
@@ -166,6 +167,7 @@ func genWallets(path string, solm SolMI) error {
 		write(fmt.Sprintf("%s:%s", target, wallet.PrivateKey))
 	}
 
+	time.Sleep(10 * time.Second)
 	return nil
 }
 
