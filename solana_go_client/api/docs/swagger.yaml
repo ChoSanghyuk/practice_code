@@ -1,0 +1,296 @@
+basePath: /api/v1
+definitions:
+  parameters.CommonResponse:
+    properties:
+      data: {}
+      message:
+        type: string
+    type: object
+  parameters.DeployRes:
+    properties:
+      mint_wallet:
+        type: string
+      signature:
+        type: string
+    type: object
+  parameters.MintReq:
+    properties:
+      amount:
+        type: integer
+    type: object
+  parameters.TargetBalanceRes:
+    properties:
+      balance:
+        type: string
+    type: object
+  parameters.TargetSolBalanceReq:
+    properties:
+      owner_address:
+        type: string
+    type: object
+  parameters.TargetTokenBalanceReq:
+    properties:
+      mint_address:
+        type: string
+      owner_address:
+        type: string
+    type: object
+  parameters.TargetTransferTokenReq:
+    properties:
+      amount:
+        type: integer
+      mint_wallet:
+        type: string
+      owner_wallet:
+        type: string
+      target_wallet:
+        type: string
+    type: object
+  parameters.TokenBalanceRes:
+    properties:
+      balance:
+        type: string
+      mint_address:
+        type: string
+      owner_address:
+        type: string
+    type: object
+  parameters.TransactionRes:
+    properties:
+      signature:
+        type: string
+    type: object
+  parameters.TransferReq:
+    properties:
+      amount:
+        type: integer
+    type: object
+info:
+  contact: {}
+  description: This is a rest api server for solapi
+  title: SOL API
+  version: 1.0.0
+paths:
+  /account/balance:
+    post:
+      consumes:
+      - application/json
+      description: SOL Balance를 조회합니다
+      parameters:
+      - description: Get SOL Balance
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/parameters.TargetSolBalanceReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/parameters.CommonResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/parameters.TargetBalanceRes'
+              type: object
+      summary: solana balance query
+      tags:
+      - /account
+  /spl/deploy:
+    post:
+      consumes:
+      - application/json
+      description: SPL Token을 생성합니다
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/parameters.CommonResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/parameters.DeployRes'
+              type: object
+      summary: SPL Token 생성
+      tags:
+      - /spl
+  /spl/deploy-with-mint:
+    post:
+      consumes:
+      - application/json
+      description: Token Account를 생성한 뒤 민팅합니다.
+      parameters:
+      - description: Performance Create SPL Token And Mint Request
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/parameters.MintReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/parameters.CommonResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/parameters.DeployRes'
+              type: object
+      summary: Token Account 생성 후 민팅
+      tags:
+      - /spl
+  /spl/mint:
+    post:
+      consumes:
+      - application/json
+      description: 배포 완료 상태에서 target wallet에 추가 민팅합니다.
+      parameters:
+      - description: Performance SPL Token Mint Request
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/parameters.MintReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/parameters.CommonResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/parameters.TransactionRes'
+              type: object
+      summary: 민팅
+      tags:
+      - /spl
+  /spl/query:
+    get:
+      consumes:
+      - application/json
+      description: Token Balance를 조회합니다
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/parameters.CommonResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/parameters.TokenBalanceRes'
+              type: object
+      summary: Token Query
+      tags:
+      - /spl
+  /spl/set-mint-account:
+    post:
+      consumes:
+      - application/json
+      description: 기존 생성한 Mint Account에 deploy 후 민팅
+      parameters:
+      - description: Performance Create SPL Token And Mint Request
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/parameters.MintReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+      summary: 테스트 사전 준비
+      tags:
+      - /spl
+  /spl/target/query:
+    post:
+      consumes:
+      - application/json
+      description: Token Balance를 조회합니다
+      parameters:
+      - description: Target Transfer SPL Token
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/parameters.TargetTokenBalanceReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/parameters.CommonResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/parameters.TokenBalanceRes'
+              type: object
+      summary: Token Query
+      tags:
+      - /spl
+  /spl/target/transfer:
+    post:
+      consumes:
+      - application/json
+      description: Token을 전송합니다.
+      parameters:
+      - description: Transfer SPL Token
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/parameters.TargetTransferTokenReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/parameters.CommonResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/parameters.TransactionRes'
+              type: object
+      summary: Target Token Transfer
+      tags:
+      - /spl
+  /spl/transfer:
+    post:
+      consumes:
+      - application/json
+      description: Token을 전송합니다.
+      parameters:
+      - description: Transfer SPL Token
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/parameters.TransferReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/parameters.CommonResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/parameters.TransactionRes'
+              type: object
+      summary: Token Transfer
+      tags:
+      - /spl
+swagger: "2.0"
