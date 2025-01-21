@@ -34,7 +34,7 @@ func (h *SplHandler) Append(r fiber.Router) {
 	r.Post("/transfer", middlewares.Validate(&parameters.TransferReq{}), h.TransferToken)
 	r.Post("/query", h.TokenBalance)
 	r.Post("/target/query", middlewares.Validate(&parameters.TargetTokenBalanceReq{}), h.TargetTokenBalance)
-	r.Post("/transfer", middlewares.Validate(&parameters.TargetTransferTokenReq{}), h.TargetTransferToken)
+	r.Post("/target/transfer", middlewares.Validate(&parameters.TargetTransferTokenReq{}), h.TargetTransferToken)
 }
 
 // @Summary SPL Token 생성
