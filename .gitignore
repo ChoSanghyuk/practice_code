@@ -2,3 +2,4 @@
 besu_go_module/config/besu/Node-*/data/
 solana_go_client/network.md
 solana_go_client/solapi
+solana_go_client/wallets.txt
