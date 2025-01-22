@@ -108,9 +108,9 @@ SPL 토큰에 대한 테스트로, 기본적인 토큰의 동작인 deploy, mint
 
 ### 테스트 설계
 
-#### 계정 세팅
+#### account 세팅
 
-#### account 종류
+##### - SPL token program 동작 시, 사용 account 종류
 
 - payer AC
   - transaction 비용 내는 계정
@@ -133,15 +133,30 @@ SPL 토큰에 대한 테스트로, 기본적인 토큰의 동작인 deploy, mint
   - user AC가 들고 있는 토큰의 양이 저장되는 계정
   - 주로 ata(Associated Token Address) 계정으로 사용
 
-#### account 세팅
+##### - account 설정 방안
 
 - **init_holder** = payer = funding = freezeAuth = mintAuth
   - 최초 minting의 될 init_holder가 token에 대한 모든 지불 및 권한 수행
 - config에서 account 개수 사전 지정
-  - N : mint AC init_holder 개수
-  - M : target 개수
+  - **N** : mint AC 및 init_holder 개수
+  - **M** : target 개수
 
 
+
+#### Solana 노드 파리미터 설정
+
+- tick 주기 변경 : 6000 => 2000 (microsecond)
+  - 1 slot = 64 tick
+
+
+
+#### nGrinder 설정
+
+- vuser : 900
+
+  | Agent | Process | Thread |
+  | :---: | :-----: | :----: |
+  |   3   |   10    |   3    |
 
 
 
@@ -156,9 +171,12 @@ SPL 토큰에 대한 테스트로, 기본적인 토큰의 동작인 deploy, mint
 | transfer |     `[post] /spl/transfer `     | `[json] { amount : ${int_value} }` |
 |  query   |       `[get] /spl/query `       |                                    |
 
-- minting 또는 transfer 수행 전에는 `[post] /spl/set-mint-account` 수행 필요 (parameter 필요 없음)
+- deploy : 초기 init_holder N명이 돌아가면서 신규 token 발행
+- minting : 초기 배포된 token N개를 돌아가면서 target M명에게 추가 minting
+- transfer : 초기 init_holder N명이 돌아가면서 target M명에게 전송
+- query : init_holder N명이 들고있는 토큰의 balance 조회
 
-- query 수행 전에는 충분히 많은 (N *M) 수 의 minting 혹은 transfer 수행 필요
+
 
 
 
@@ -169,11 +187,13 @@ SPL 토큰에 대한 테스트로, 기본적인 토큰의 동작인 deploy, mint
 
 :bulb: 해당 케이스에선 mint account는 N개로 제한하지 않고, 무한히 생성
 
-|  N   | 테스트 시간(min) | MTT(ms) |  TPS  | 비고 |
-| :--: | :--------------: | :-----: | :---: | :--: |
-|  1   |        2         |  2054   |  430  |      |
-| 100  |        2         |  1529   | 580.9 |      |
-| 1000 |        2         |  1522   | 580.2 |      |
+|  N   | 테스트 시간(min) | MTT(ms)[^5] |  TPS  |
+| :--: | :--------------: | :---------: | :---: |
+|  1   |        2         |    2054     |  430  |
+| 100  |        2         |    1529     | 580.9 |
+| 1000 |        2         |    1522     | 580.2 |
+
+[^5]: Mean Test Time
 
 
 
@@ -182,12 +202,23 @@ SPL 토큰에 대한 테스트로, 기본적인 토큰의 동작인 deploy, mint
 - deploy된 token에 대해서 target account에 transfer 수행
 - init_holder 수(N)를 변수로 설정하고 parallel 수행 여부에 따른 TPS 확인
 
-|  N   |  M   | 테스트 시간(min) | MTT(ms) | TPS  |
-| :--: | :--: | :--------------: | :-----: | :--: |
-|  1   | 1000 |        2         |  5353   | 163  |
-| 100  | 1000 |        2         |   548   | 1632 |
-| 1000 | 1000 |        2         |   549   | 1785 |
-| 1000 |  1   |                  |         |      |
+|  N   |  M   | 테스트 시간 | MTT(ms) | TPS  |
+| :--: | :--: | :---------: | :-----: | :--: |
+|  1   | 1000 |    2(m)     |  5353   | 163  |
+| 100  | 1000 |    2(m)     |   548   | 1632 |
+| 1000 | 1000 |    2(m)     |   549   | 1785 |
+| 1000 |  1   |    40(s)    |  5683   | 900  |
+
+- :warning: N:1000, M:1 케이스는 테스트 중간부터 `IllegalOwner` error 다수 발생. 동일 account에 중첩된 접근으로 오류 발생 확인
+
+#### [비교] finalized transfer
+
+|  N   |  M   | 테스트 시간(m) | MTT(ms) | TPS  |
+| :--: | :--: | :------------: | :-----: | :--: |
+| 1000 | 1000 |       2        |  35014  |  33  |
+| 1000 |  1   |       2        |  34421  |  33  |
+
+
 
 
 
@@ -199,7 +230,7 @@ SPL 토큰에 대한 테스트로, 기본적인 토큰의 동작인 deploy, mint
 | :--: | :--------------: | :-----: | :---: |
 |  1   |        2         |  11.39  | 86268 |
 | 100  |        2         |  12.17  | 73257 |
-| 1000 |        2         |         |       |
+| 1000 |        2         |  12.19  | 83783 |
 
 
 
@@ -210,13 +241,8 @@ SPL 토큰에 대한 테스트로, 기본적인 토큰의 동작인 deploy, mint
 ### 추후 테스트 일정
 
 - 트랜잭션 signature를 모두 저장해 둔 후, confirmed 이후 finalized 이전 dropped되는 트랜잭션 존재 여부 확인
-- 노드 파라미터 조정에 따른 성능 변화 확인
 - 멀티 노드 환경에서의 성능 변화 확인
-
-
-
-
-
+- 커스텀 컨트랙트 사용
 
 
 
