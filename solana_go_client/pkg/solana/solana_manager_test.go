@@ -63,7 +63,7 @@ func TestUnit(t *testing.T) {
 
 	sm, err := newSolanaManager()
 	if err != nil {
-		log.Fatalf("Error creating crawler manager: %v", err)
+		log.Fatalf("Error creating solana manager: %v", err)
 	}
 
 	payerW, _ := solana.WalletFromPrivateKeyBase58("Tx2y8ztcSXr2vx2jkEAYbtqKwDaceRFtwFRSFCD7cxEzPv4Zp6ZdUb9eNKLB9KwF8mkuSdd9rbZFPUmG9KPzYyH")
@@ -80,10 +80,10 @@ func TestUnit(t *testing.T) {
 	// 54YCaNP5JfZuZb44qxPsjRjEghQDnXCMDMHvKR2484oaM2tgiufDrzRpNsHv7pR3HDrs3jCTWHBv5XeXCG3indn3
 
 	t.Run("account fund", func(t *testing.T) {
-		wallet, err := solana.WalletFromPrivateKeyBase58("32JsF4FWwjrwdiEGfoFvTCGpZDEckeqkTq7WmVF1AH2rDLtHy345KbmYZYvDvNmyaesgjJVRs8jXbMNhkUobk3Hr")
+		_, err := solana.WalletFromPrivateKeyBase58("32JsF4FWwjrwdiEGfoFvTCGpZDEckeqkTq7WmVF1AH2rDLtHy345KbmYZYvDvNmyaesgjJVRs8jXbMNhkUobk3Hr")
 		require.NoError(t, err)
 
-		tx, err := sm.RequestAirdrop(context.Background(), wallet, 100)
+		tx, err := sm.RequestAirdrop(context.Background(), payerW, 100)
 		require.NoError(t, err)
 		log.Println(tx)
 	})
@@ -227,15 +227,6 @@ func TestUnit(t *testing.T) {
 		log.Printf("sig: %s\n", sig.String())
 		log.Printf("ata: %s\n", ata.String())
 
-		// balance, err := sm.TokenBalance(
-		// 	context.Background(),
-		// 	token.PublicKey(),
-		// )
-		// require.NoError(t, err)
-
-		// uBalance, _ := strconv.ParseUint(*balance, 0, 64)
-		// require.Equal(t, amount, uBalance)
-		// log.Printf("%v\n", balance)
 	})
 
 	t.Run("new token with minting", func(t *testing.T) {
@@ -252,6 +243,14 @@ func TestUnit(t *testing.T) {
 
 		log.Printf("sig: %s\n", sig.String())
 		log.Printf("ata: %s\n", ata.String())
+	})
+
+	t.Run("token account creation", func(t *testing.T) {
+
+		sig, err := sm.CreateAta(context.Background(), payerW, owner1, mintW.PublicKey())
+		require.NoError(t, err)
+
+		log.Printf("sig: %s\n", sig.String())
 	})
 
 	t.Run("get token supply", func(t *testing.T) {

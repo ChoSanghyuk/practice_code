@@ -57,19 +57,7 @@ func (m *SolanaManager) RequestAirdrop(ctx context.Context, wallet *solana.Walle
 	return sig.String(), nil
 }
 
-// func (m *SolanaManager) RequestAirdropSync(ctx context.Context, wallet *solana.Wallet, amount uint64) (string, error) {
-// 	sig, err := m.rpc.RequestAirdrop(ctx, wallet.PublicKey(), solana.LAMPORTS_PER_SOL*amount, rpc.CommitmentFinalized)
-// 	if err != nil {
-// 		return "", err
-// 	}
-
-// 	_, err = m.waitForConfirmation(ctx, m.ws, sig, nil)
-// 	if err != nil {
-// 		return "", fmt.Errorf("airdrop 동기 요청 실패 sig: %s, err : %w", sig, err)
-// 	}
-
-// 	return sig.String(), nil
-// }
+const mustFinalized bool = true
 
 func (m *SolanaManager) CreateAccountWithFaucet(ctx context.Context, solAmount uint64) (*solana.Wallet, error) {
 	wallet := solana.NewWallet()
@@ -112,7 +100,7 @@ func (m *SolanaManager) SetMintAccount(ctx context.Context, mintWallet, payerWal
 		solana.SysVarRentPubkey, // SysVarRentPubkey
 	).Build()
 
-	sig, err := m.precessTransactions(ctx, []solana.Instruction{createAccountInst, mintInst}, payerWallet, []*solana.Wallet{payerWallet, mintWallet})
+	sig, err := m.precessTransactions(ctx, []solana.Instruction{createAccountInst, mintInst}, payerWallet, []*solana.Wallet{payerWallet, mintWallet}, !mustFinalized)
 	if err != nil {
 		return nil, err
 	}
@@ -149,7 +137,7 @@ func (m *SolanaManager) Mint(ctx context.Context, payerWallet *solana.Wallet, mi
 	).Build()
 	instructions = append(instructions, mintTokenInst)
 
-	sig, err := m.precessTransactions(ctx, instructions, payerWallet, []*solana.Wallet{payerWallet})
+	sig, err := m.precessTransactions(ctx, instructions, payerWallet, []*solana.Wallet{payerWallet}, !mustFinalized)
 	if err != nil {
 		return nil, solana.PublicKey{}, err
 	}
@@ -211,7 +199,7 @@ func (m *SolanaManager) SetMintAccountAndMint(ctx context.Context, payerWallet, 
 	sig, err := m.precessTransactions(ctx,
 		[]solana.Instruction{createAccountInst, mintInst, createTokenAccountInst, mintTokenInst},
 		payerWallet,
-		[]*solana.Wallet{payerWallet, mintWallet})
+		[]*solana.Wallet{payerWallet, mintWallet}, mustFinalized)
 	if err != nil {
 		return nil, solana.PublicKey{}, err
 	}
@@ -219,31 +207,34 @@ func (m *SolanaManager) SetMintAccountAndMint(ctx context.Context, payerWallet, 
 	return &sig, ata, nil
 }
 
+func (m *SolanaManager) isAtaExist(ctx context.Context, target, mint solana.PublicKey) (solana.PublicKey, bool) {
+	ata, _, err := solana.FindAssociatedTokenAddress(target, mint)
+	if err != nil {
+		m.logger.Error().Err(err).Msg("Failed to find associated token address")
+		return solana.PublicKey{}, false
+	}
+
+	info, err := m.AccountInfo(ctx, ata)
+	if err != nil && info == nil {
+		return solana.PublicKey{}, false
+	}
+
+	return ata, true
+}
+
+// todo 반환 타입
 func (m *SolanaManager) TransferToken(ctx context.Context, payer, owner, receiver *solana.Wallet, mintAc solana.PublicKey, amount uint64) (*solana.Signature, error) {
 
 	instructions := make([]solana.Instruction, 0)
+	var from, to solana.PublicKey
+	var isExist bool
 
-	from, _, err := solana.FindAssociatedTokenAddress(owner.PublicKey(), mintAc)
-	if err != nil {
-		m.logger.Error().Err(err).Msg("Failed to find associated token address")
-		return nil, err
-	}
-
-	// 이미 생성된 ata에 대해서는 생성 생략
-	info, err := m.AccountInfo(ctx, from)
-	if err != nil && info == nil {
+	if from, isExist = m.isAtaExist(ctx, owner.PublicKey(), mintAc); !isExist {
 		return nil, errors.New("미등록 token account에서 송신 시도")
 	}
 
-	to, _, err := solana.FindAssociatedTokenAddress(receiver.PublicKey(), mintAc)
-	if err != nil {
-		m.logger.Error().Err(err).Msg("Failed to find associated token address")
-		return nil, err
-	}
-
-	// receiver가 이미 토큰 주소를 가지고 있다면 생략
-	info, err = m.AccountInfo(ctx, to)
-	if err != nil && info == nil {
+	// 이미 생성된 ata에 대해서는 생성 생략
+	if to, isExist = m.isAtaExist(ctx, receiver.PublicKey(), mintAc); !isExist {
 		createTokenAccountInst := associatedtokenaccount.NewCreateInstruction(
 			payer.PublicKey(),
 			receiver.PublicKey(),
@@ -255,7 +246,26 @@ func (m *SolanaManager) TransferToken(ctx context.Context, payer, owner, receive
 	transferInst := token.NewTransferInstruction(amount, from, to, owner.PublicKey(), nil).Build()
 	instructions = append(instructions, transferInst)
 
-	sig, err := m.precessTransactions(ctx, instructions, payer, []*solana.Wallet{payer, owner, receiver}) // todo. test - owner없이도 서명되는지
+	sig, err := m.precessTransactions(ctx, instructions, payer, []*solana.Wallet{payer, owner, receiver}, !mustFinalized) // todo. test - owner없이도 서명되는지
+
+	return &sig, err
+}
+
+func (m *SolanaManager) CreateAta(ctx context.Context, payer, owner *solana.Wallet, mintAc solana.PublicKey) (*solana.Signature, error) {
+
+	instructions := make([]solana.Instruction, 0)
+	if _, isExist := m.isAtaExist(ctx, owner.PublicKey(), mintAc); isExist {
+		return nil, nil
+	}
+
+	createTokenAccountInst := associatedtokenaccount.NewCreateInstruction(
+		payer.PublicKey(),
+		owner.PublicKey(),
+		mintAc,
+	).Build()
+	instructions = append(instructions, createTokenAccountInst)
+
+	sig, err := m.precessTransactions(ctx, instructions, payer, []*solana.Wallet{payer, owner}, !mustFinalized) // todo. test - owner없이도 서명되는지
 
 	return &sig, err
 }
@@ -336,7 +346,7 @@ func (m *SolanaManager) GetTokenHolders(ctx context.Context, mintAddress solana.
 **********************************************************  Inner Function  ************************************************************************
 ***************************************************************************************************************************************************/
 
-func (m *SolanaManager) precessTransactions(ctx context.Context, instructions []solana.Instruction, payerWallet *solana.Wallet, signers []*solana.Wallet) (solana.Signature, error) {
+func (m *SolanaManager) precessTransactions(ctx context.Context, instructions []solana.Instruction, payerWallet *solana.Wallet, signers []*solana.Wallet, mustFinalized bool) (solana.Signature, error) {
 
 	// 트랜잭션 생성
 	tx, err := m.buildTransactions(ctx, instructions, payerWallet.PublicKey())
@@ -346,14 +356,14 @@ func (m *SolanaManager) precessTransactions(ctx context.Context, instructions []
 	}
 
 	// 트랜잭션 서명
-	tx, err = m.signTransaction(ctx, tx, signers)
+	tx, err = m.signTransaction(tx, signers)
 	if err != nil {
 		m.logger.Error().Err(err).Msg("Failed to sign transaction")
 		return solana.Signature{}, err
 	}
 
 	// 트랜잭션 전송
-	sig, err := m.sendTransaction(ctx, tx)
+	sig, err := m.sendTransaction(ctx, tx, mustFinalized)
 	if err != nil {
 		m.logger.Error().Err(err).Msg("Failed to send transaction")
 		return solana.Signature{}, err
@@ -381,7 +391,7 @@ func (m *SolanaManager) buildTransactions(ctx context.Context, instructions []so
 	return tx, nil
 }
 
-func (m *SolanaManager) signTransaction(ctx context.Context, tx *solana.Transaction, signers []*solana.Wallet) (*solana.Transaction, error) {
+func (m *SolanaManager) signTransaction(tx *solana.Transaction, signers []*solana.Wallet) (*solana.Transaction, error) {
 	_, err := tx.Sign(
 		func(key solana.PublicKey) *solana.PrivateKey {
 			for _, signer := range signers {
@@ -399,9 +409,17 @@ func (m *SolanaManager) signTransaction(ctx context.Context, tx *solana.Transact
 	return tx, nil
 }
 
-func (m *SolanaManager) sendTransaction(ctx context.Context, tx *solana.Transaction) (solana.Signature, error) {
+func (m *SolanaManager) sendTransaction(ctx context.Context, tx *solana.Transaction, mustFinalized bool) (solana.Signature, error) {
 	if m.conf.IsSync {
-		sig, err := m.sendAndConfirmTransaction(ctx, m.rpc, m.ws, tx)
+
+		var commitStatus rpc.CommitmentType
+		if mustFinalized {
+			commitStatus = rpc.CommitmentFinalized
+		} else {
+			commitStatus = m.conf.Commitment
+		}
+
+		sig, err := sendAndConfirmTransaction(ctx, m.rpc, m.ws, tx, commitStatus)
 		if err != nil {
 			m.logger.Error().Err(err).Msg("Failed to send transaction")
 			return solana.Signature{}, err
@@ -441,18 +459,19 @@ func (m *SolanaManager) Balance(ctx context.Context, pubKey solana.PublicKey) (*
 }
 
 // customize functions of sendandconfirmtransaction package
-func (m *SolanaManager) sendAndConfirmTransaction(
+func sendAndConfirmTransaction(
 	ctx context.Context,
 	rpcClient *rpc.Client,
 	wsClient *ws.Client,
 	transaction *solana.Transaction,
+	commitStatus rpc.CommitmentType,
 ) (signature solana.Signature, err error) {
 	opts := rpc.TransactionOpts{
 		SkipPreflight:       false,
-		PreflightCommitment: m.conf.Commitment,
+		PreflightCommitment: commitStatus,
 	}
 
-	return m.sendAndConfirmTransactionWithOpts(
+	return sendAndConfirmTransactionWithOpts(
 		ctx,
 		rpcClient,
 		wsClient,
@@ -463,7 +482,7 @@ func (m *SolanaManager) sendAndConfirmTransaction(
 }
 
 // Send and wait for confirmation of a transaction.
-func (m *SolanaManager) sendAndConfirmTransactionWithOpts(
+func sendAndConfirmTransactionWithOpts(
 	ctx context.Context,
 	rpcClient *rpc.Client,
 	wsClient *ws.Client,
@@ -479,11 +498,12 @@ func (m *SolanaManager) sendAndConfirmTransactionWithOpts(
 	if err != nil {
 		return sig, err
 	}
-	_, err = m.waitForConfirmation(
+	_, err = waitForConfirmation(
 		ctx,
 		wsClient,
 		sig,
 		timeout,
+		opts.PreflightCommitment,
 	)
 	return sig, err
 }
@@ -492,15 +512,16 @@ func (m *SolanaManager) sendAndConfirmTransactionWithOpts(
 // If the transaction was confirmed, but it failed while executing (one of the instructions failed),
 // then this function will return an error (true, error).
 // If the transaction was confirmed, and it succeeded, then this function will return nil (true, nil).
-func (m *SolanaManager) waitForConfirmation(
+func waitForConfirmation(
 	ctx context.Context,
 	wsClient *ws.Client,
 	sig solana.Signature,
 	timeout *time.Duration,
+	commitStatus rpc.CommitmentType,
 ) (confirmed bool, err error) {
 	sub, err := wsClient.SignatureSubscribe(
 		sig,
-		m.conf.Commitment,
+		commitStatus,
 	)
 	if err != nil {
 		return false, err

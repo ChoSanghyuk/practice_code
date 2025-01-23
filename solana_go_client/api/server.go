@@ -55,12 +55,22 @@ func (s *Server) ShutDown(ctx context.Context) error {
 	return s.app.ShutdownWithContext(ctx)
 }
 
-func (s *Server) Init_Wallet() error {
+func (s *Server) InitMinitAccount() error {
 	body := map[string]int{
 		"amount": 100000000,
 	}
 	bodyBytes, _ := json.Marshal(body)
 	resp, err := http.Post(fmt.Sprintf("http://localhost:%d/api/v1/spl/set-mint-account", s.conf.Port), "application/json", bytes.NewBuffer(bodyBytes))
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+	fmt.Printf("Init Request Response status: %s\n", resp.Status)
+	return nil
+}
+
+func (s *Server) InitTokenAccount() error {
+	resp, err := http.Post(fmt.Sprintf("http://localhost:%d/api/v1/spl/set-token-account", s.conf.Port), "application/json", nil)
 	if err != nil {
 		return err
 	}

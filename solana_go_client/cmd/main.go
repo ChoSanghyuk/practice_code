@@ -76,9 +76,14 @@ func main() {
 	}()
 	go func() {
 		time.Sleep(1 * time.Second)
-		if err := server.Init_Wallet(); err != nil {
-			lg.Fatal().Err(err).Msg("API 서버 초기화 실패")
+		if err := server.InitMinitAccount(); err != nil {
+			lg.Fatal().Err(err).Msg("API 서버 초기화 실패. mint account 설정 실패")
 		}
+
+		if err := server.InitTokenAccount(); err != nil {
+			lg.Fatal().Err(err).Msg("API 서버 초기화 실패. token account 설정 실패")
+		}
+		lg.Info().Msg("account setting 완료")
 	}()
 
 	quit := make(chan os.Signal, 1)

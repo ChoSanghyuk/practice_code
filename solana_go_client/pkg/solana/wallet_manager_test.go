@@ -5,6 +5,7 @@ import (
 	"log"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/gagliardetto/solana-go"
 )
@@ -30,7 +31,7 @@ func TestInitAccountManager(t *testing.T) {
 	sm := &SolMock{}
 
 	wm, err := NewWalletManager("../../wallets.txt", sm, WalletManagerConfig{
-		N: 10,
+		N: 1,
 		M: 10,
 	})
 	if err != nil {
@@ -43,13 +44,32 @@ func TestAccountManager(t *testing.T) {
 
 	sm := &SolMock{}
 
-	am, err := NewWalletManager("", sm, WalletManagerConfig{
-		N: 1000,
+	am, err := NewWalletManager("../../wallets.txt", sm, WalletManagerConfig{
+		N: 1,
 		M: 10,
 	})
 	if err != nil {
 		log.Fatalf("Error creating account manager: %v", err)
 	}
+
+	t.Run("pair pop test", func(t *testing.T) {
+
+		for i := 0; i < 20; i++ {
+			a, b := am.NextMintInitWallet()
+			log.Printf("%s %s", a.PublicKey().String(), b.PublicKey().String())
+			time.Sleep(100 * time.Millisecond)
+		}
+	})
+
+	t.Run("target pop test", func(t *testing.T) {
+
+		for i := 0; i < 20; i++ {
+			a := am.NextTrgtWallet()
+			log.Printf("%s", a.PublicKey().String())
+			time.Sleep(100 * time.Millisecond)
+		}
+	})
+
 	t.Run("Lock test", func(t *testing.T) {
 
 		var wg sync.WaitGroup

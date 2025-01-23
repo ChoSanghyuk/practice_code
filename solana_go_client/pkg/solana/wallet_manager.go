@@ -71,6 +71,10 @@ func (wm *WalletManager) MintN() int {
 	return len(wm.mintAcQ.wallets)
 }
 
+func (wm *WalletManager) TargetN() int {
+	return len(wm.targetAcQ.wallets)
+}
+
 func (am *WalletManager) NewWallet() *solana.Wallet {
 	return solana.NewWallet()
 }

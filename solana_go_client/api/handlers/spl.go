@@ -9,6 +9,7 @@ import (
 	"workspace/pkg/log"
 	"workspace/pkg/solana"
 
+	solanaLib "github.com/gagliardetto/solana-go"
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -30,11 +31,118 @@ func (h *SplHandler) Append(r fiber.Router) {
 	r.Post("/deploy", h.DeployToken)
 	r.Post("/deploy-with-mint", middlewares.Validate(&parameters.MintReq{}), h.DeployWithMint)
 	r.Post("/set-mint-account", middlewares.Validate(&parameters.MintReq{}), h.SetMintAccount)
+	r.Post("/set-token-account", h.SetTokenAccount)
 	r.Post("/mint", middlewares.Validate(&parameters.MintReq{}), h.Mint)
 	r.Post("/transfer", middlewares.Validate(&parameters.TransferReq{}), h.TransferToken)
 	r.Post("/query", h.TokenBalance)
 	r.Post("/target/query", middlewares.Validate(&parameters.TargetTokenBalanceReq{}), h.TargetTokenBalance)
 	r.Post("/target/transfer", middlewares.Validate(&parameters.TargetTransferTokenReq{}), h.TargetTransferToken)
+}
+
+// @Summary 테스트 사전 준비
+// @Description 기존 생성한 Mint Account에 deploy 후 민팅
+// @Tags /spl
+// @Accept json
+// @Produce json
+// @Param body body parameters.MintReq true "Performance Create SPL Token And Mint Request"
+// @Success 200
+// @Router /spl/set-mint-account [post]
+func (h *SplHandler) SetMintAccount(c *fiber.Ctx) error {
+	reqID := c.Locals(types.RequestID).(string)
+	lg := h.logger.SetReqID(reqID)
+	ctx := context.WithValue(c.Context(), types.RequestID, reqID)
+
+	req := &parameters.MintReq{}
+	err := c.BodyParser(req)
+	if err != nil {
+		return err
+	}
+
+	lg.Debug().
+		Msg("POST /spl/set-mint-account 호출")
+
+	n := h.wm.MintN()
+
+	var wg sync.WaitGroup
+	wg.Add(n)
+	ch := make(chan error)
+	for i := 0; i < n; i++ {
+		go func(ch chan error) {
+			defer wg.Done()
+			mintWllt, initWllt := h.wm.NextMintInitWallet()
+			auth := initWllt.PublicKey()
+
+			_, _, err := h.solm.SetMintAccountAndMint(ctx, initWllt, mintWllt, initWllt.PublicKey(), auth, auth, uint64(req.Amount))
+			if err != nil {
+				ch <- err
+			}
+		}(ch)
+	}
+
+	wg.Wait()
+	close(ch)
+
+	for err := range ch {
+		if err != nil {
+			return err
+		}
+	}
+	return c.Status(fiber.StatusOK).
+		JSON(
+			parameters.NewSuccessResponse(nil),
+		)
+}
+
+// @Summary 테스트 사전 준비
+// @Description token n개에 대한 target m명의 token account 전체 생성
+// @Tags /spl
+// @Accept json
+// @Produce json
+// @Param body
+// @Success 200
+// @Router /spl/set-token-account [post]
+func (h *SplHandler) SetTokenAccount(c *fiber.Ctx) error {
+	reqID := c.Locals(types.RequestID).(string)
+	lg := h.logger.SetReqID(reqID)
+	ctx := context.WithValue(c.Context(), types.RequestID, reqID)
+
+	lg.Debug().
+		Msg("POST /spl/set-token-account 호출")
+
+	n := h.wm.MintN()
+	m := h.wm.TargetN()
+
+	var wg sync.WaitGroup
+	wg.Add(n * m)
+	ch := make(chan error)
+	for i := 0; i < n; i++ {
+		mintWllt, initWllt := h.wm.NextMintInitWallet()
+
+		for j := 0; j < m; j++ {
+			trgtWllt := h.wm.NextTrgtWallet()
+			go func(ch chan error, mintWllt, initWllt, trgtWllt *solanaLib.Wallet) {
+				defer wg.Done()
+
+				_, err := h.solm.CreateAta(ctx, initWllt, trgtWllt, mintWllt.PublicKey())
+				if err != nil {
+					ch <- err
+				}
+			}(ch, mintWllt, initWllt, trgtWllt)
+		}
+	}
+
+	wg.Wait()
+	close(ch)
+
+	for err := range ch {
+		if err != nil {
+			return err
+		}
+	}
+	return c.Status(fiber.StatusOK).
+		JSON(
+			parameters.NewSuccessResponse(nil),
+		)
 }
 
 // @Summary SPL Token 생성
@@ -110,61 +218,6 @@ func (h *SplHandler) DeployWithMint(c *fiber.Ctx) error {
 					MintWallet: mintWallet.PrivateKey.String(),
 				},
 			),
-		)
-}
-
-// @Summary 테스트 사전 준비
-// @Description 기존 생성한 Mint Account에 deploy 후 민팅
-// @Tags /spl
-// @Accept json
-// @Produce json
-// @Param body body parameters.MintReq true "Performance Create SPL Token And Mint Request"
-// @Success 200
-// @Router /spl/set-mint-account [post]
-func (h *SplHandler) SetMintAccount(c *fiber.Ctx) error {
-	reqID := c.Locals(types.RequestID).(string)
-	lg := h.logger.SetReqID(reqID)
-	ctx := context.WithValue(c.Context(), types.RequestID, reqID)
-
-	req := &parameters.MintReq{}
-	err := c.BodyParser(req)
-	if err != nil {
-		return err
-	}
-
-	lg.Debug().
-		Msg("POST /spl/set-mint-account 호출")
-
-	n := h.wm.MintN()
-
-	var wg sync.WaitGroup
-	wg.Add(n)
-	ch := make(chan error)
-	for i := 0; i < n; i++ {
-		go func(ch chan error) {
-			defer wg.Done()
-			mintWllt, initWllt := h.wm.NextMintInitWallet()
-			auth := initWllt.PublicKey()
-
-			// _, _, err := h.solm.Mint(ctx, initWllt, mintWllt.PublicKey(), initWllt.PublicKey(), auth, uint64(req.Amount))
-			_, _, err := h.solm.SetMintAccountAndMint(ctx, initWllt, mintWllt, initWllt.PublicKey(), auth, auth, uint64(req.Amount))
-			if err != nil {
-				ch <- err
-			}
-		}(ch)
-	}
-
-	wg.Wait()
-	close(ch)
-
-	for err := range ch {
-		if err != nil {
-			return err
-		}
-	}
-	return c.Status(fiber.StatusOK).
-		JSON(
-			parameters.NewSuccessResponse(nil),
 		)
 }
 
