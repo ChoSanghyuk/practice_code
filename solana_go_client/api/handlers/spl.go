@@ -74,6 +74,11 @@ func (h *SplHandler) SetMintAccount(c *fiber.Ctx) error {
 
 			_, _, err := h.solm.SetMintAccountAndMint(ctx, initWllt, mintWllt, initWllt.PublicKey(), auth, auth, uint64(req.Amount))
 			if err != nil {
+				lg.Error().
+					Str("mint_address", mintWllt.PublicKey().String()).
+					Str("init_holder_address", initWllt.PublicKey().String()).
+					Err(err).
+					Msg("set mint account 오류 발생")
 				ch <- err
 			}
 		}(ch)
@@ -125,6 +130,12 @@ func (h *SplHandler) SetTokenAccount(c *fiber.Ctx) error {
 
 				_, err := h.solm.CreateAta(ctx, initWllt, trgtWllt, mintWllt.PublicKey())
 				if err != nil {
+					lg.Error().
+						Str("mint_address", mintWllt.PublicKey().String()).
+						Str("init_holder_address", initWllt.PublicKey().String()).
+						Str("target_address", trgtWllt.PublicKey().String()).
+						Err(err).
+						Msg("create token address 오류 발생")
 					ch <- err
 				}
 			}(ch, mintWllt, initWllt, trgtWllt)
@@ -165,6 +176,11 @@ func (h *SplHandler) DeployToken(c *fiber.Ctx) error {
 	mintWallet := h.solm.CreateAccount(context.Background())
 	sig, err := h.solm.SetMintAccount(ctx, mintWallet, initW, initW.PublicKey(), initW.PublicKey())
 	if err != nil {
+		lg.Error().
+			Str("mint_address", mintWallet.PublicKey().String()).
+			Str("init_holder_address", initW.PublicKey().String()).
+			Err(err).
+			Msg("deploy 오류 발생")
 		return err
 	}
 
@@ -207,6 +223,11 @@ func (h *SplHandler) DeployWithMint(c *fiber.Ctx) error {
 
 	sig, _, err := h.solm.SetMintAccountAndMint(ctx, initWllt, mintWallet, initWllt.PublicKey(), auth, auth, uint64(req.Amount))
 	if err != nil {
+		lg.Error().
+			Str("mint_address", mintWallet.PublicKey().String()).
+			Str("init_holder_address", initWllt.PublicKey().String()).
+			Err(err).
+			Msg("deploy with mint 오류 발생")
 		return err
 	}
 
