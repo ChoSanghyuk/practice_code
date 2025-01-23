@@ -265,7 +265,7 @@ func (m *SolanaManager) CreateAta(ctx context.Context, payer, owner *solana.Wall
 	).Build()
 	instructions = append(instructions, createTokenAccountInst)
 
-	sig, err := m.precessTransactions(ctx, instructions, payer, []*solana.Wallet{payer, owner}, !mustFinalized) // todo. test - owner없이도 서명되는지
+	sig, err := m.precessTransactions(ctx, instructions, payer, []*solana.Wallet{payer, owner}, mustFinalized) // todo. test - owner없이도 서명되는지
 
 	return &sig, err
 }
