@@ -183,7 +183,6 @@ func (m *SolanaManager) SetMintAccountAndMint(ctx context.Context, payerWallet, 
 		m.logger.Error().Err(err).Msg("Failed to find associated token address")
 		return nil, solana.PublicKey{}, err
 	}
-	m.logger.Info().Msg(ata.String())
 
 	createTokenAccountInst := associatedtokenaccount.NewCreateInstruction(
 		payerWallet.PublicKey(),
@@ -268,7 +267,7 @@ func (m *SolanaManager) CreateAta(ctx context.Context, payer, owner *solana.Wall
 	).Build()
 	instructions = append(instructions, createTokenAccountInst)
 
-	sig, err := m.precessTransactions(ctx, instructions, payer, []*solana.Wallet{payer, owner}, mustFinalized) // todo. test - owner없이도 서명되는지
+	sig, err := m.precessTransactions(ctx, instructions, payer, []*solana.Wallet{payer, owner}, !mustFinalized) // todo. must finalized 없애고 필요한 경우 그냥 기다려
 
 	return &sig, err
 }
