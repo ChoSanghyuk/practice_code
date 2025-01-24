@@ -89,9 +89,11 @@ func (c *Config) WalletConfig() solana.WalletManagerConfig {
 
 	n := c.viper.GetInt(path + ".N")
 	m := c.viper.GetInt(path + ".M")
+	t := c.viper.GetInt(path + ".T")
 
 	return solana.WalletManagerConfig{
 		N: solana.MintAccountNumber(n),
 		M: solana.TargetAccountNumber(m),
+		T: solana.TotalAccountNumber(t),
 	}
 }

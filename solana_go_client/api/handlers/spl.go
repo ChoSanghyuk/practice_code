@@ -103,7 +103,6 @@ func (h *SplHandler) SetMintAccount(c *fiber.Ctx) error {
 // @Tags /spl
 // @Accept json
 // @Produce json
-// @Param body
 // @Success 200
 // @Router /spl/set-token-account [post]
 func (h *SplHandler) SetTokenAccount(c *fiber.Ctx) error {

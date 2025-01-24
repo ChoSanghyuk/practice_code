@@ -529,7 +529,7 @@ func waitForConfirmation(
 	defer sub.Unsubscribe()
 
 	if timeout == nil {
-		t := 2 * time.Minute // random default timeout
+		t := 3 * time.Minute // random default timeout
 		timeout = &t
 	}
 

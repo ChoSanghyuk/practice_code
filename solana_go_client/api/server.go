@@ -36,7 +36,7 @@ func NewServerWith(conf Config,
 	spl := router.Group("spl")
 	handlers.NewSplHandler(solm, wm).Append(spl)
 	account := router.Group("account")
-	handlers.NewAccountHandler(solm).Append(account)
+	handlers.NewAccountHandler(solm, wm).Append(account)
 
 	app.Get("/docs/*", swagger.HandlerDefault)
 	router.Get("/docs/*", swagger.HandlerDefault)

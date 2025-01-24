@@ -29,9 +29,10 @@ func NewWalletManager(path string, sm SolMI, conf WalletManagerConfig) (*WalletM
 
 	n := int(conf.N)
 	m := int(conf.M)
+	t := int(conf.T)
 
 	if !fileExists(path) {
-		err := genWallets(path, sm)
+		err := genWallets(path, sm, t)
 		if err != nil {
 			return nil, fmt.Errorf("generate wallet 중 오류 %w", err)
 		}
@@ -125,7 +126,7 @@ func (wq *WalletCircleQueue) pop() *solana.Wallet {
 
 /************************************************** load **************************************************/
 
-const totalNumber = 1000
+// const totalNumber = 1000
 
 const mint = "mint"
 const initHolder = "init_holder"
@@ -139,7 +140,7 @@ func fileExists(path string) bool {
 	return err == nil
 }
 
-func genWallets(path string, solm SolMI) error {
+func genWallets(path string, solm SolMI, totalNumber int) error {
 	file, err := os.Create(path)
 	if err != nil {
 		return err
@@ -159,7 +160,7 @@ func genWallets(path string, solm SolMI) error {
 		write(fmt.Sprintf("%s:%s:%s", mint, wallet.PrivateKey, wallet.PublicKey())) // todo key값 변수화
 	}
 	for i := 0; i < totalNumber; i++ {
-		wallet, err = solm.CreateAccountWithFaucet(context.Background(), 100)
+		wallet, err = solm.CreateAccountWithFaucet(context.Background(), 10)
 		write(fmt.Sprintf("%s:%s:%s", initHolder, wallet.PrivateKey, wallet.PublicKey()))
 	}
 	if err != nil {
@@ -175,6 +176,7 @@ func genWallets(path string, solm SolMI) error {
 	return nil
 }
 
+// todo int 말고 커스텀 타입 파라미터 받아서 사용
 func loadWallet(path string, n, m int, solm SolMI) (*WalletManager, error) {
 	file, err := os.Open(path)
 	if err != nil {

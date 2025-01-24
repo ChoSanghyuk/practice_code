@@ -13,5 +13,6 @@ solana:
   sync: true
 
 wallet:
+  T : 100 # wallets.txt에 사전 세팅 해두는 전체 계정 수
   N : 10
   M : 50

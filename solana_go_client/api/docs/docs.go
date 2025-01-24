@@ -61,6 +61,37 @@ const docTemplate = `{
                 }
             }
         },
+        "/account/fill-balance": {
+            "post": {
+                "description": "SOL Balance를 충전합니다",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "/account"
+                ],
+                "summary": "fill solana balance",
+                "parameters": [
+                    {
+                        "description": "Get SOL Balance",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/parameters.AridropReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
         "/spl/deploy": {
             "post": {
                 "description": "SPL Token을 생성합니다",
@@ -254,6 +285,26 @@ const docTemplate = `{
                 }
             }
         },
+        "/spl/set-token-account": {
+            "post": {
+                "description": "token n개에 대한 target m명의 token account 전체 생성",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "/spl"
+                ],
+                "summary": "테스트 사전 준비",
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
         "/spl/target/query": {
             "post": {
                 "description": "Token Balance를 조회합니다",
@@ -394,6 +445,14 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "parameters.AridropReq": {
+            "type": "object",
+            "properties": {
+                "amount": {
+                    "type": "integer"
+                }
+            }
+        },
         "parameters.CommonResponse": {
             "type": "object",
             "properties": {

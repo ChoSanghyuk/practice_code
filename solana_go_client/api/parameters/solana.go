@@ -1,5 +1,9 @@
 package parameters
 
+type AridropReq struct {
+	Amount int `json:"amount"`
+}
+
 type MintReq struct {
 	Amount int `json:"amount"`
 }

@@ -1,5 +1,10 @@
 basePath: /api/v1
 definitions:
+  parameters.AridropReq:
+    properties:
+      amount:
+        type: integer
+    type: object
   parameters.CommonResponse:
     properties:
       data: {}
@@ -96,6 +101,26 @@ paths:
                   $ref: '#/definitions/parameters.TargetBalanceRes'
               type: object
       summary: solana balance query
+      tags:
+      - /account
+  /account/fill-balance:
+    post:
+      consumes:
+      - application/json
+      description: SOL Balance를 충전합니다
+      parameters:
+      - description: Get SOL Balance
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/parameters.AridropReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+      summary: fill solana balance
       tags:
       - /account
   /spl/deploy:
@@ -204,6 +229,19 @@ paths:
         required: true
         schema:
           $ref: '#/definitions/parameters.MintReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+      summary: 테스트 사전 준비
+      tags:
+      - /spl
+  /spl/set-token-account:
+    post:
+      consumes:
+      - application/json
+      description: token n개에 대한 target m명의 token account 전체 생성
       produces:
       - application/json
       responses:
