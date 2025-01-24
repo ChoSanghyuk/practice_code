@@ -36,6 +36,7 @@ func NewWalletManager(path string, sm SolMI, conf WalletManagerConfig) (*WalletM
 		if err != nil {
 			return nil, fmt.Errorf("generate wallet 중 오류 %w", err)
 		}
+		fmt.Println("wallet 생성 성공")
 	}
 
 	wm, err := loadWallet(path, n, m, sm)
@@ -126,8 +127,6 @@ func (wq *WalletCircleQueue) pop() *solana.Wallet {
 
 /************************************************** load **************************************************/
 
-// const totalNumber = 1000
-
 const mint = "mint"
 const initHolder = "init_holder"
 const target = "target"
@@ -140,7 +139,7 @@ func fileExists(path string) bool {
 	return err == nil
 }
 
-func genWallets(path string, solm SolMI, totalNumber int) error {
+func genWallets(path string, solm SolMI, t int) error {
 	file, err := os.Create(path)
 	if err != nil {
 		return err
@@ -155,22 +154,26 @@ func genWallets(path string, solm SolMI, totalNumber int) error {
 	}
 
 	var wallet *solana.Wallet
-	for i := 0; i < totalNumber; i++ {
+	for i := 0; i < t; i++ {
 		wallet = solm.CreateAccount(context.Background())
 		write(fmt.Sprintf("%s:%s:%s", mint, wallet.PrivateKey, wallet.PublicKey())) // todo key값 변수화
 	}
-	for i := 0; i < totalNumber; i++ {
+	fmt.Println("mint account 생성 완료")
+
+	for i := 0; i < t; i++ {
 		wallet, err = solm.CreateAccountWithFaucet(context.Background(), 10)
 		write(fmt.Sprintf("%s:%s:%s", initHolder, wallet.PrivateKey, wallet.PublicKey()))
 	}
 	if err != nil {
 		return fmt.Errorf("wallet 초기화 중 실패. %w", err)
 	}
+	fmt.Println("init account 생성 완료")
 
-	for i := 0; i < totalNumber; i++ {
+	for i := 0; i < t; i++ {
 		wallet := solm.CreateAccount(context.Background())
 		write(fmt.Sprintf("%s:%s:%s", target, wallet.PrivateKey, wallet.PublicKey()))
 	}
+	fmt.Println("target account 생성 완료")
 
 	time.Sleep(10 * time.Second)
 	return nil

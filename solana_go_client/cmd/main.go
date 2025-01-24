@@ -43,6 +43,7 @@ func main() {
 	if err != nil {
 		lg.Fatal().Err(err).Msg("Solana Manager 초기화 실패")
 	}
+	lg.Info().Msg("Solana Manager 초기화 성공")
 
 	path, _ := os.Getwd()
 	wm, err := solana.NewWalletManager(path+"/wallets.txt", solm, conf.WalletConfig())
