@@ -26,6 +26,9 @@ type SolanaManager struct {
 func NewSolanaManager(conf SolManagerConfig) (*SolanaManager, error) {
 
 	rpcClient := rpc.New(conf.RPCURL)
+	if rpcClient == nil {
+		return nil, fmt.Errorf("rpc client 생성 실패. url : %s", conf.RPCURL)
+	}
 
 	wsClient, err := ws.Connect(context.Background(), conf.WSURL)
 	if err != nil {

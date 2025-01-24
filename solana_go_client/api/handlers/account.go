@@ -104,6 +104,7 @@ func (h *AccountHandler) FillBalance(c *fiber.Ctx) error {
 
 	var wg sync.WaitGroup
 	wg.Add(n)
+
 	ch := make(chan error)
 	for i := 0; i < n; i++ {
 		go func(ch chan error) {

@@ -158,7 +158,7 @@ func genWallets(path string, solm SolMI, t int) error {
 		wallet = solm.CreateAccount(context.Background())
 		write(fmt.Sprintf("%s:%s:%s", mint, wallet.PrivateKey, wallet.PublicKey())) // todo key값 변수화
 	}
-	fmt.Println("mint account 생성 완료")
+	fmt.Println("mint account 생성 완료") // todo logger
 
 	for i := 0; i < t; i++ {
 		wallet, err = solm.CreateAccountWithFaucet(context.Background(), 10)
@@ -175,7 +175,7 @@ func genWallets(path string, solm SolMI, t int) error {
 	}
 	fmt.Println("target account 생성 완료")
 
-	time.Sleep(10 * time.Second)
+	time.Sleep(15 * time.Second)
 	return nil
 }
 

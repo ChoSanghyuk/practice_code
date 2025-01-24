@@ -119,13 +119,20 @@ func (h *SplHandler) SetTokenAccount(c *fiber.Ctx) error {
 	var wg sync.WaitGroup
 	wg.Add(n * m)
 	ch := make(chan error)
+
+	maxGoroutines := 1000
+	semaphore := make(chan struct{}, maxGoroutines)
+
 	for i := 0; i < n; i++ {
 		mintWllt, initWllt := h.wm.NextMintInitWallet()
 
 		for j := 0; j < m; j++ {
 			trgtWllt := h.wm.NextTrgtWallet()
+
+			semaphore <- struct{}{}
 			go func(ch chan error, mintWllt, initWllt, trgtWllt *solanaLib.Wallet) {
 				defer wg.Done()
+				defer func() { <-semaphore }()
 
 				_, err := h.solm.CreateAta(ctx, initWllt, trgtWllt, mintWllt.PublicKey())
 				if err != nil {
