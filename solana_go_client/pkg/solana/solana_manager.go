@@ -30,6 +30,7 @@ func NewSolanaManager(conf SolManagerConfig) (*SolanaManager, error) {
 		return nil, fmt.Errorf("rpc client 생성 실패. url : %s", conf.RPCURL)
 	}
 
+	fmt.Printf("rpc client: %+v\n", rpcClient)
 	wsClient, err := ws.Connect(context.Background(), conf.WSURL)
 	if err != nil {
 		return nil, err
