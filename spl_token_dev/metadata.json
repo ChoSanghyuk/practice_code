@@ -2,5 +2,5 @@
   "name": "Green Coin",
   "symbol": "GRN",
   "description": "sample custom token from Solana Making a Token guide.",
-  "image": "https://raw.githubusercontent.com/solana-developers/opos-asset/main/assets/CompressedCoil/image.png"
+  "image": "https://raw.githubusercontent.com/ChoSanghyuk/practice_code/refs/heads/master/spl_token_dev/circle.png"
 }
