@@ -89,7 +89,7 @@ func TestUnit(t *testing.T) {
 	})
 
 	t.Run("account balance query", func(t *testing.T) {
-		wallet, err := solana.WalletFromPrivateKeyBase58("5MBFFymun7cJoACtJ1gERkhAwcENiYsQT98rNDHj7XEEcSDbfMrzczUXkgx8EJZ7zZ4bK8o1NirKXPu4TkwX2MG5")
+		wallet, err := solana.WalletFromPrivateKeyBase58("8vHgHv9K1NvthKa7xbU26PaimM2hst5NUEhSPT63CCrdxwGDZKadg6bLE2kMtCnytDqyZzChvkAmA5BhReKhYJo")
 		require.NoError(t, err)
 
 		pubKey := wallet.PublicKey()
@@ -97,7 +97,8 @@ func TestUnit(t *testing.T) {
 
 		balance, err := sm.Balance(context.Background(), pubKey)
 		require.NoError(t, err)
-		log.Println(balance, "balance")
+		amount, _ := balance.Float32()
+		log.Println(amount, "balance")
 
 	})
 

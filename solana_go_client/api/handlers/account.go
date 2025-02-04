@@ -121,7 +121,7 @@ func (h *AccountHandler) FillBalance(c *fiber.Ctx) error {
 			}
 			bal, _ := amount.Float32()
 
-			if bal == 0 {
+			if bal < 10 {
 				_, err = h.solm.RequestAirdrop(ctx, initWllt, uint64(req.Amount))
 				if err != nil {
 					lg.Error().
