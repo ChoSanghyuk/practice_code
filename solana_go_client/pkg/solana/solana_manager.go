@@ -202,7 +202,7 @@ func (m *SolanaManager) SetMintAccountAndMint(ctx context.Context, payerWallet, 
 	sig, err := m.precessTransactions(ctx,
 		[]solana.Instruction{createAccountInst, mintInst, createTokenAccountInst, mintTokenInst},
 		payerWallet,
-		[]*solana.Wallet{payerWallet, mintWallet}, mustFinalized)
+		[]*solana.Wallet{payerWallet, mintWallet}, !mustFinalized)
 	if err != nil {
 		return nil, solana.PublicKey{}, err
 	}
