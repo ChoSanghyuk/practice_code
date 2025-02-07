@@ -1,6 +1,10 @@
 package solana
 
-import "github.com/gagliardetto/solana-go/rpc"
+import (
+	"time"
+
+	"github.com/gagliardetto/solana-go/rpc"
+)
 
 type MintAccountNumber int
 type TargetAccountNumber int
@@ -17,4 +21,5 @@ type SolManagerConfig struct {
 	WSURL      string
 	Commitment rpc.CommitmentType
 	IsSync     bool
+	Timeout    time.Duration
 }

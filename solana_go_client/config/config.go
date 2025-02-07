@@ -2,6 +2,7 @@ package config
 
 import (
 	"strings"
+	"time"
 	"workspace/api"
 	"workspace/pkg/log"
 	"workspace/pkg/solana"
@@ -76,6 +77,7 @@ func (c *Config) SolanaConfig() solana.SolManagerConfig {
 		WSURL:      c.viper.GetString(path + ".ws_url"),
 		Commitment: rpc.CommitmentType(c.viper.GetString(path + ".commitment")),
 		IsSync:     c.viper.GetBool(path + ".sync"),
+		Timeout:    time.Duration(c.viper.GetInt(path+".timeout")) * time.Minute,
 	}
 
 	c.logger.Info().

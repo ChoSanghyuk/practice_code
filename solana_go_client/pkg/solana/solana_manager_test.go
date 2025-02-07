@@ -5,6 +5,7 @@ import (
 	"log"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/davecgh/go-spew/spew"
 	"github.com/gagliardetto/solana-go"
@@ -66,7 +67,7 @@ func TestUnit(t *testing.T) {
 		log.Fatalf("Error creating solana manager: %v", err)
 	}
 
-	payerW, _ := solana.WalletFromPrivateKeyBase58("Tx2y8ztcSXr2vx2jkEAYbtqKwDaceRFtwFRSFCD7cxEzPv4Zp6ZdUb9eNKLB9KwF8mkuSdd9rbZFPUmG9KPzYyH")
+	payerW, _ := solana.WalletFromPrivateKeyBase58("5YdaiifTQW69gzo6cFvLffpN5UT8KJiLQU4BGo33fEcPvts9zELPNomn8ZXA25tpZqecA2vboLboEtmoAKUkAvoQ")
 	mintW, _ := solana.WalletFromPrivateKeyBase58("2Dv9x4xgj5LVaCSAVTEdLdZwFztQk3QBaq3yZ8GRpciHkrf58MneUmHNdFW7ChCpEFLniiknjY6JZuJU36FPJTBh") //("5DfHivrXhYga5Y1UbQafHuNzTWPzGn31F3Tv5t5h2bQn58cRT3ohxXQUoSxXKUssRuBrdCNJsks5cU3PQfCNrVHZ")
 	owner1, _ := solana.WalletFromPrivateKeyBase58("5Zk5gLkpxumRaeprPFGV5x41DZXBgPARBLkBqgPaMbaFUFzhMwDSrGqBKvPcLTLQy1sDripVVvwmrTiDL1cNSHXN")
 	owner2, _ := solana.WalletFromPrivateKeyBase58("52fhezV6r62Meszq8zQugSxPryzAs379aMTntv3jz9CcosmAjr6C2BFmY1hUNkAFgKfJDqVk7KsJaYUVF2zhgxj5")
@@ -179,9 +180,9 @@ func TestUnit(t *testing.T) {
 	})
 
 	t.Run("new token", func(t *testing.T) {
-
 		// payer, err := solana.WalletFromPrivateKeyBase58("3KPVVBRV3YZMJ67pdg7QgB2kDzJ42Au4mKEShYNC8GP7HM7BdFNPzuSJ3GLKtv3D81NCj2KpZmJaPKcuTj2zUvGR")
 		// require.NoError(t, err)
+
 		token := solana.NewWallet()
 		sig, err := sm.SetMintAccount(
 			context.Background(),
@@ -322,6 +323,7 @@ func newSolanaManager() (*SolanaManager, error) {
 		WSURL:      "ws://124.50.46.159:50002",
 		Commitment: rpc.CommitmentFinalized,
 		IsSync:     true,
+		Timeout:    0 * time.Minute,
 		// RPCURL: "http://118.37.71.15:8899",
 	})
 }

@@ -11,6 +11,7 @@ solana:
   ws_url: ws://124.50.46.159:50002 #ws://localhost:8900
   commitment: confirmed #finalized
   sync: true
+  timeout: 1 # 분단위 사용 0일 때 타임아웃 없음
 
 wallet:
   T : 10 # wallets.txt에 사전 세팅 해두는 전체 계정 수
