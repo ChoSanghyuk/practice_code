@@ -1,4 +1,4 @@
-package codec
+package evmtxbroker
 
 import (
 	"bytes"
@@ -6,10 +6,12 @@ import (
 	"fmt"
 	"math/big"
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 )
 
@@ -25,7 +27,7 @@ func TestEvmContractCodec_parseTxData(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	codec := NewEvmCodec(nil, common.Address{}, &lbRouterABIAbi)
+	codec := NewEvmTxBroker(nil, common.Address{}, &lbRouterABIAbi)
 	err = codec.unparseTxData(txData, "removeLiquidityNATIVE")
 	if err != nil {
 		t.Fatal(err)
@@ -143,7 +145,7 @@ func TestGetReceipt(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	codec := NewEvmCodec(client, common.Address{}, nil)
+	codec := NewEvmTxBroker(client, common.Address{}, nil)
 	// tx1. 0x879490912b85011eba12835ad9d14df373e751ca65dda5f600823ad3c5c8e768
 	// tx2. 0x2bd517822ca76b5ba552d90879e4486b43ec753b133cded6f67b23316c9371be
 	tx := common.HexToHash("0xbad4a71871ed80a0b48aef5b9a170a074431d6ad112ebb4e2b807c820111790d")
@@ -191,7 +193,7 @@ func TestSubnets(t *testing.T) {
 
 	t.Run("blockchainId", func(t *testing.T) {
 
-		codec := NewEvmCodec(client1, common.HexToAddress("0x789a5FDac2b37FCD290fb2924382297A6AE65860"), &homeABIAbi)
+		codec := NewEvmTxBroker(client1, common.HexToAddress("0x789a5FDac2b37FCD290fb2924382297A6AE65860"), &homeABIAbi)
 		rtn, err := codec.Call(nil, "getBlockchainID")
 		if err != nil {
 			t.Fatal(err)
@@ -200,7 +202,7 @@ func TestSubnets(t *testing.T) {
 	})
 
 	t.Run("totalSupply", func(t *testing.T) {
-		codec := NewEvmCodec(client1, common.HexToAddress("0x52C84043CD9c865236f11d9Fc9F56aa003c1f922"), &homeABIAbi)
+		codec := NewEvmTxBroker(client1, common.HexToAddress("0x52C84043CD9c865236f11d9Fc9F56aa003c1f922"), &homeABIAbi)
 		rtn, err := codec.Call(nil, "totalSupply")
 		if err != nil {
 			t.Fatal(err)
@@ -210,7 +212,7 @@ func TestSubnets(t *testing.T) {
 
 	t.Run("Parsed Receipt", func(t *testing.T) {
 
-		codec := NewEvmCodec(client1, common.Address{}, &homeABIAbi)
+		codec := NewEvmTxBroker(client1, common.Address{}, &homeABIAbi)
 		// tx1. 0x706c68b47d380303f3c78399c685c2e7e173d07715bab58f478a82a0ffc46dab
 		// tx2. 0x665f25b1cabc27c95391e47e18f78a0b986e7d7639359069e4463d1850a4b751
 		tx := common.HexToHash("0x340e23b6292300180c0b9bd1684a032002f941dec0be1498b8b9ce2d4fa97ff2")
@@ -233,7 +235,7 @@ func TestSubnets(t *testing.T) {
 	})
 
 	t.Run("Only receipt", func(t *testing.T) {
-		codec := NewEvmCodec(client2, common.Address{}, &homeABIAbi)
+		codec := NewEvmTxBroker(client2, common.Address{}, &homeABIAbi)
 		tx := common.HexToHash("0x8fb5a9ad6cde92fef43c21107f9ae242336a67d17ff6329a19e9b8f9bf26eb30")
 		receipt, err := codec.GetReceipt(tx)
 		if err != nil {
@@ -247,7 +249,7 @@ func TestSubnets(t *testing.T) {
 	})
 
 	t.Run("mock supply", func(t *testing.T) {
-		codec := NewEvmCodec(client1, common.HexToAddress("0xe17bDC68168d07c1776c362d596adaa5d52A1De7"), &erc20Abi)
+		codec := NewEvmTxBroker(client1, common.HexToAddress("0xe17bDC68168d07c1776c362d596adaa5d52A1De7"), &erc20Abi)
 		rtn, err := codec.Call(nil, "totalSupply")
 		if err != nil {
 			t.Fatal(err)
@@ -256,7 +258,7 @@ func TestSubnets(t *testing.T) {
 	})
 
 	t.Run("recipient balance", func(t *testing.T) {
-		codec := NewEvmCodec(client2, common.HexToAddress("0x32CaF0D54B0578a96A1aDc7269F19e7398358174"), &remoteABIAbi)
+		codec := NewEvmTxBroker(client2, common.HexToAddress("0x32CaF0D54B0578a96A1aDc7269F19e7398358174"), &remoteABIAbi)
 		rtn, err := codec.Call(nil, "balanceOf", common.HexToAddress("0x66291aa2EAa47d2F6b75A4c585437BDBf93D155d"))
 		if err != nil {
 			t.Fatal(err)
@@ -272,7 +274,7 @@ func TestSendTemp(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	codec := NewEvmCodec(client, common.HexToAddress("0x94b75331AE8d42C1b61065089B7d48FE14aA73b7"), nil)
+	codec := NewEvmTxBroker(client, common.HexToAddress("0x94b75331AE8d42C1b61065089B7d48FE14aA73b7"), nil)
 	pk := os.Getenv("PK")
 
 	myAddr := common.HexToAddress("0xb4dd4fb3D4bCED984cce972991fB100488b59223")
@@ -282,4 +284,84 @@ func TestSendTemp(t *testing.T) {
 		t.Fatal(err)
 	}
 	t.Log(tx)
+}
+
+func TestUniswapPermit(t *testing.T) {
+
+	t.Run("Permit2_DomainSeparator", func(t *testing.T) {
+		client, err := ethclient.Dial("https://api.avax.network/ext/bc/C/rpc")
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		permit2Abi, err := abi.JSON(strings.NewReader(`[
+		{
+			"inputs": [],
+			"name": "DOMAIN_SEPARATOR",
+			"outputs": [
+			{
+				"internalType": "bytes32",
+				"name": "",
+				"type": "bytes32"
+			}
+			],
+			"stateMutability": "view",
+			"type": "function"
+		}
+		]`))
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		codec := NewEvmTxBroker(client, common.HexToAddress("0x000000000022D473030F116dDEE9F6B43aC78BA3"), &permit2Abi)
+		rtn, err := codec.Call(nil, "DOMAIN_SEPARATOR")
+
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		dsByte32 := rtn[0].([32]byte) //domainseprator
+		dsByte := make([]byte, 32)
+		copy(dsByte, dsByte32[:])
+		dsHex := common.Bytes2Hex(dsByte)
+
+		t.Log(dsHex) // 9af1d8185d41d30789e7ea3232bfa189680da8b3a4851663719b75da9b1c13c4
+	})
+
+	t.Run("Permit2_DomainSeparator_manually", func(t *testing.T) {
+
+		typeHashSlice := crypto.Keccak256([]byte("EIP712Domain(string name,uint256 chainId,address verifyingContract)"))
+		hashedNameSlice := crypto.Keccak256([]byte("Permit2"))
+
+		// Convert slices to arrays
+		var typeHash [32]byte
+		var hashedName [32]byte
+		copy(typeHash[:], typeHashSlice)
+		copy(hashedName[:], hashedNameSlice)
+
+		chainId := big.NewInt(43114)
+		permit2Arrd := common.HexToAddress("0x000000000022D473030F116dDEE9F6B43aC78BA3")
+
+		uint256Type, _ := abi.NewType("uint256", "", nil)
+		bytes32Type, _ := abi.NewType("bytes32", "", nil)
+		addressType, _ := abi.NewType("address", "", nil)
+
+		arguments := abi.Arguments{
+			{Type: bytes32Type}, // typeHash
+			{Type: bytes32Type}, // nameHash
+			{Type: uint256Type}, // chainID
+			{Type: addressType}, // contract address
+		}
+
+		// Pack the data (equivalent to abi.encode in Solidity)
+		packed, err := arguments.Pack(typeHash, hashedName, chainId, permit2Arrd)
+		if err != nil {
+			panic(fmt.Sprintf("Failed to pack data: %v", err))
+		}
+
+		// Hash the packed data with keccak256
+		hash := crypto.Keccak256Hash(packed)
+		t.Log(hash)
+	})
+
 }

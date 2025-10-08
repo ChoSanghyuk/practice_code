@@ -1,4 +1,4 @@
-package codec
+package evmtxbroker
 
 type Priority uint8
 

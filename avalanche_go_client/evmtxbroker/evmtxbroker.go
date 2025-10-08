@@ -1,7 +1,8 @@
-package codec
+package evmtxbroker
 
 import (
 	"context"
+	"crypto/ecdsa"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
@@ -16,21 +17,39 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 )
 
-type EvmContractCodec struct {
+type EvmTxBroker struct {
 	contractAddress common.Address
 	abi             *abi.ABI
 	client          *ethclient.Client
+	chainId         *big.Int
 }
 
-func NewEvmCodec(client *ethclient.Client, contractAddress common.Address, abi *abi.ABI) *EvmContractCodec {
-	return &EvmContractCodec{
+/*
+
+func (cm *EvmContractCodec) ChainId() (*big.Int, error) {
+	chainID, err := cm.client.ChainID(context.Background())
+	if err != nil {
+		return nil, errors.Join(errors.New("ChainID Get Error"), err)
+	}
+	return chainID, nil
+}
+*/
+
+func NewEvmTxBroker(client *ethclient.Client, contractAddress common.Address, abi *abi.ABI) *EvmTxBroker {
+	chainID, err := client.ChainID(context.Background())
+	if err != nil {
+		return nil // todo.
+	}
+
+	return &EvmTxBroker{
 		contractAddress: contractAddress,
 		abi:             abi,
 		client:          client,
+		chainId:         chainID,
 	}
 }
 
-func (cm *EvmContractCodec) Call(from *common.Address, method string, args ...interface{}) ([]interface{}, error) {
+func (cm *EvmTxBroker) Call(from *common.Address, method string, args ...interface{}) ([]interface{}, error) {
 
 	if from == nil {
 		from = &common.Address{}
@@ -57,15 +76,15 @@ func (cm *EvmContractCodec) Call(from *common.Address, method string, args ...in
 	return rtn, nil
 }
 
-func (cm *EvmContractCodec) Send(priority Priority, fixedGasLimit *big.Int, from *common.Address, privateKeyHex string, method string, args ...interface{}) (common.Hash, error) {
-	return cm.send(priority, fixedGasLimit, nil, from, privateKeyHex, method, args...)
+func (cm *EvmTxBroker) Send(priority Priority, fixedGasLimit *big.Int, from *common.Address, privateKey *ecdsa.PrivateKey, method string, args ...interface{}) (common.Hash, error) {
+	return cm.send(priority, fixedGasLimit, nil, from, privateKey, method, args...)
 }
 
-func (cm *EvmContractCodec) SendWithValue(priority Priority, fixedGasLimit *big.Int, value *big.Int, from *common.Address, privateKeyHex string, method string, args ...interface{}) (common.Hash, error) {
-	return cm.send(priority, fixedGasLimit, value, from, privateKeyHex, method, args...)
+func (cm *EvmTxBroker) SendWithValue(priority Priority, fixedGasLimit *big.Int, value *big.Int, from *common.Address, privateKey *ecdsa.PrivateKey, method string, args ...interface{}) (common.Hash, error) {
+	return cm.send(priority, fixedGasLimit, value, from, privateKey, method, args...)
 }
 
-func (cm *EvmContractCodec) send(priority Priority, fixedGasLimit *big.Int, value *big.Int, from *common.Address, privateKeyHex string, method string, args ...interface{}) (common.Hash, error) {
+func (cm *EvmTxBroker) send(priority Priority, fixedGasLimit *big.Int, value *big.Int, from *common.Address, privateKey *ecdsa.PrivateKey, method string, args ...interface{}) (common.Hash, error) {
 	if from == nil {
 		from = &common.Address{}
 	}
@@ -106,12 +125,6 @@ func (cm *EvmContractCodec) send(priority Priority, fixedGasLimit *big.Int, valu
 		gasLimit = fixedGasLimit.Uint64()
 	}
 
-	// Get chain ID
-	chainID, err := cm.client.ChainID(context.Background())
-	if err != nil {
-		return common.Hash{}, errors.Join(fmt.Errorf("%s Send 시, ChainID Error", method), err)
-	}
-
 	// Calculate gas tip cap (priority fee) - typically 1-2 Gwei
 	gasTipCap := big.NewInt(1500000000) // 1.5 Gwei
 
@@ -121,7 +134,7 @@ func (cm *EvmContractCodec) send(priority Priority, fixedGasLimit *big.Int, valu
 	// EIP-1559에서는 baseFee가 자동으로 소각(burn) => validator에게 별도로 주는 팁이 priorityFee(보통 2Gwei)
 
 	tx := types.NewTx(&types.DynamicFeeTx{
-		ChainID:    chainID,
+		ChainID:    cm.chainId,
 		Nonce:      nonce,
 		GasTipCap:  gasTipCap, // a.k.a. maxPriorityFeePerGas
 		GasFeeCap:  gasFeeCap, // a.k.a. maxFeePerGas
@@ -133,12 +146,7 @@ func (cm *EvmContractCodec) send(priority Priority, fixedGasLimit *big.Int, valu
 	})
 
 	// Sign transaction
-	privateKey, err := crypto.HexToECDSA(privateKeyHex)
-	if err != nil {
-		return common.Hash{}, errors.Join(fmt.Errorf("%s Send 시, HexToECDSA Error", method), err)
-	}
-
-	signedTx, err := types.SignTx(tx, types.LatestSignerForChainID(chainID), privateKey)
+	signedTx, err := types.SignTx(tx, types.LatestSignerForChainID(cm.chainId), privateKey)
 	if err != nil {
 		return common.Hash{}, errors.Join(fmt.Errorf("%s Send 시, SignTx Error", method), err)
 	}
@@ -152,7 +160,7 @@ func (cm *EvmContractCodec) send(priority Priority, fixedGasLimit *big.Int, valu
 	return signedTx.Hash(), nil
 }
 
-func (cm *EvmContractCodec) unparseTxData(txData string, method string) error {
+func (cm *EvmTxBroker) unparseTxData(txData string, method string) error {
 
 	// hex to bytes
 	txDataBytes, err := hex.DecodeString(txData)
@@ -170,7 +178,7 @@ func (cm *EvmContractCodec) unparseTxData(txData string, method string) error {
 	return nil
 }
 
-func (cm *EvmContractCodec) TestSend(priority Priority, from *common.Address, privateKeyHex string, method string) (common.Hash, error) {
+func (cm *EvmTxBroker) TestSend(priority Priority, from *common.Address, privateKeyHex string, method string) (common.Hash, error) {
 	if from == nil {
 		from = &common.Address{}
 	}
@@ -205,12 +213,6 @@ func (cm *EvmContractCodec) TestSend(priority Priority, from *common.Address, pr
 		gasLimit = gasLimit * 2
 	}
 
-	// Get chain ID
-	chainID, err := cm.client.ChainID(context.Background())
-	if err != nil {
-		return common.Hash{}, errors.Join(fmt.Errorf("%s Send 시, ChainID Error", ""), err)
-	}
-
 	// Calculate gas tip cap (priority fee) - typically 1-2 Gwei
 	gasTipCap := big.NewInt(1500000000) // 1.5 Gwei
 
@@ -219,7 +221,7 @@ func (cm *EvmContractCodec) TestSend(priority Priority, from *common.Address, pr
 	gasFeeCap := new(big.Int).Add(gasPrice, big.NewInt(2000000000)) // base fee + 2 Gwei
 
 	tx := types.NewTx(&types.DynamicFeeTx{
-		ChainID:    chainID,
+		ChainID:    cm.chainId,
 		Nonce:      nonce,
 		GasTipCap:  gasTipCap, // a.k.a. maxPriorityFeePerGas
 		GasFeeCap:  gasFeeCap, // a.k.a. maxFeePerGas
@@ -236,7 +238,7 @@ func (cm *EvmContractCodec) TestSend(priority Priority, from *common.Address, pr
 		return common.Hash{}, errors.Join(fmt.Errorf("%s Send 시, HexToECDSA Error", method), err)
 	}
 
-	signedTx, err := types.SignTx(tx, types.LatestSignerForChainID(chainID), privateKey)
+	signedTx, err := types.SignTx(tx, types.LatestSignerForChainID(cm.chainId), privateKey)
 	if err != nil {
 		return common.Hash{}, errors.Join(fmt.Errorf("%s Send 시, SignTx Error", method), err)
 	}
@@ -270,7 +272,7 @@ type TxReceipt struct {
 	Type              string       `json:"type"`
 }
 
-func (cm *EvmContractCodec) GetReceipt(txHash common.Hash) (*TxReceipt, error) {
+func (cm *EvmTxBroker) GetReceipt(txHash common.Hash) (*TxReceipt, error) {
 
 	var r *TxReceipt
 
@@ -289,7 +291,7 @@ type EventInfo struct {
 	Parameter map[string]interface{} `json:"parameter"`
 }
 
-func (cm *EvmContractCodec) ParseReceipt(receipt *TxReceipt) (string, error) {
+func (cm *EvmTxBroker) ParseReceipt(receipt *TxReceipt) (string, error) {
 
 	events := make([]*EventInfo, len(receipt.Logs))
 	for i, log := range receipt.Logs {
@@ -351,4 +353,12 @@ func (cm *EvmContractCodec) ParseReceipt(receipt *TxReceipt) (string, error) {
 		return "", err
 	}
 	return string(jsonData), nil
+}
+
+func (cm *EvmTxBroker) ContractAddress() *common.Address {
+	return &cm.contractAddress
+}
+
+func (cm *EvmTxBroker) ChainId() *big.Int {
+	return cm.chainId
 }

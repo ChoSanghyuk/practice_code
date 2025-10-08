@@ -1,8 +1,9 @@
 package avalanche_go
 
 import (
-	"avalanche_go_client/codec"
+	"avalanche_go_client/evmtxbroker"
 	"bytes"
+	"crypto/ecdsa"
 	"errors"
 	"fmt"
 	"math"
@@ -12,19 +13,25 @@ import (
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 )
 
 type TraderJoeClient struct {
-	pk         string
-	lbPair     *codec.EvmContractCodec
-	lbRouter   *codec.EvmContractCodec
+	pk         *ecdsa.PrivateKey
+	lbPair     *evmtxbroker.EvmTxBroker
+	lbRouter   *evmtxbroker.EvmTxBroker
 	myAddr     common.Address
 	routerAddr common.Address
 }
 
 func NewTraderJoeClient(pk string) (*TraderJoeClient, error) {
 	client, err := ethclient.Dial("https://api.avax.network/ext/bc/C/rpc")
+	if err != nil {
+		return nil, err
+	}
+
+	privateKey, err := crypto.HexToECDSA(pk)
 	if err != nil {
 		return nil, err
 	}
@@ -38,7 +45,7 @@ func NewTraderJoeClient(pk string) (*TraderJoeClient, error) {
 		return nil, err
 	}
 
-	lbPariCodec := codec.NewEvmCodec(client, common.HexToAddress("0x864d4e5Ee7318e97483DB7EB0912E09F161516EA"), &lbPairABIAbi)
+	lbPariCodec := evmtxbroker.NewEvmTxBroker(client, common.HexToAddress("0x864d4e5Ee7318e97483DB7EB0912E09F161516EA"), &lbPairABIAbi)
 
 	json, err = os.ReadFile("./abi/LBrouter.json")
 	if err != nil {
@@ -48,13 +55,13 @@ func NewTraderJoeClient(pk string) (*TraderJoeClient, error) {
 	if err != nil {
 		return nil, err
 	}
-	lbRouterCodec := codec.NewEvmCodec(client, common.HexToAddress("0x18556DA13313f3532c54711497A8FedAC273220E"), &lbRouterABIAbi)
+	lbRouterCodec := evmtxbroker.NewEvmTxBroker(client, common.HexToAddress("0x18556DA13313f3532c54711497A8FedAC273220E"), &lbRouterABIAbi)
 
 	// Read pk from os variable
 	// pk := os.Getenv("PK")
 
 	return &TraderJoeClient{
-		pk:         pk,
+		pk:         privateKey,
 		lbPair:     lbPariCodec,
 		lbRouter:   lbRouterCodec,
 		myAddr:     common.HexToAddress("0xb4dd4fb3D4bCED984cce972991fB100488b59223"),
@@ -125,9 +132,9 @@ func (t *TraderJoeClient) RemoveLiquidity(ids []*big.Int, amounts []*big.Int, am
 	if isNative {
 		// Navitve 일때 토큰 X에 대한 정보 필요 없음
 		// amountMin 순서도 토큰Y 다음 Native 순서
-		hash, err = t.lbRouter.Send(codec.High, nil, &t.myAddr, t.pk, "removeLiquidityNATIVE", tokenY, binStep, amountYMin, amountXMin, ids, amounts, to, deadline)
+		hash, err = t.lbRouter.Send(evmtxbroker.High, nil, &t.myAddr, t.pk, "removeLiquidityNATIVE", tokenY, binStep, amountYMin, amountXMin, ids, amounts, to, deadline)
 	} else {
-		hash, err = t.lbRouter.Send(codec.Standard, nil, &t.myAddr, t.pk, "removeLiquidity", tokenX, tokenY, binStep, amountXMin, amountYMin, ids, amounts, to, deadline)
+		hash, err = t.lbRouter.Send(evmtxbroker.Standard, nil, &t.myAddr, t.pk, "removeLiquidity", tokenX, tokenY, binStep, amountXMin, amountYMin, ids, amounts, to, deadline)
 	}
 
 	if err != nil {
@@ -154,7 +161,7 @@ func (t *TraderJoeClient) SwapNATIVEForExactTokens(amountOut *big.Int, tokenAddr
 		TokenPath:    tokenPath,
 	}
 
-	hash, err := t.lbRouter.Send(codec.Standard, nil, &t.myAddr, t.pk, "swapNATIVEForExactTokens", amountOut, path, t.myAddr, deadline)
+	hash, err := t.lbRouter.Send(evmtxbroker.Standard, nil, &t.myAddr, t.pk, "swapNATIVEForExactTokens", amountOut, path, t.myAddr, deadline)
 	if err != nil {
 		return nil, errors.Join(fmt.Errorf("%s Error", "SwapNATIVEForExactTokens"), err)
 	}
@@ -174,7 +181,7 @@ func (t *TraderJoeClient) SwapExactTokensForNATIVE(amountIn *big.Int, amountOutM
 		TokenPath:    tokenPath,
 	}
 
-	hash, err := t.lbRouter.Send(codec.High, nil, &t.myAddr, t.pk, "swapExactTokensForNATIVE", amountIn, amountOutMin, path, t.myAddr, deadline)
+	hash, err := t.lbRouter.Send(evmtxbroker.High, nil, &t.myAddr, t.pk, "swapExactTokensForNATIVE", amountIn, amountOutMin, path, t.myAddr, deadline)
 	if err != nil {
 		return nil, errors.Join(fmt.Errorf("%s Error", "SwapExactTokensForNATIVE"), err)
 	}
@@ -194,7 +201,7 @@ func (t *TraderJoeClient) SwapExactTokensForTokens(amountIn *big.Int, amountOutM
 		TokenPath:    tokenPath,
 	}
 
-	hash, err := t.lbRouter.Send(codec.High, nil, &t.myAddr, t.pk, "swapExactTokensForTokens", amountIn, amountOutMin, path, t.myAddr, deadline)
+	hash, err := t.lbRouter.Send(evmtxbroker.High, nil, &t.myAddr, t.pk, "swapExactTokensForTokens", amountIn, amountOutMin, path, t.myAddr, deadline)
 	if err != nil {
 		return nil, errors.Join(fmt.Errorf("%s Error", "SwapExactTokensForTokens"), err)
 	}

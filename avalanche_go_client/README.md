@@ -336,6 +336,10 @@ struct PermitDetails {
 
 
 
+---
+
+
+Approve txHash : 0x3bd25cf2b1338f14fc94e5282e22869d0a85e53e3fd3a40781b6aa6d743f355f
 
 
 
